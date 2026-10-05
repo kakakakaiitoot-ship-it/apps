@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>先生のためのアプリ置き場</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   ★ 設定はここだけ ★
+   アプリを増やすときは APPS に1行足すだけでOK（下の<script>内）
+   ========================================================= */
+:root{
+  --blue:#1f4fa3; --blue-deep:#16397a; --blue-pale:#eaf0fa;
+  --ink:#1b2a44; --sub:#5a6b88; --white:#fff;
+}
+*{box-sizing:border-box;margin:0}
+body{font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Meiryo",sans-serif;color:var(--ink);background:var(--white);line-height:1.7}
+header{background:var(--blue);color:var(--white);padding:48px 20px 40px;border-bottom:10px solid var(--white);box-shadow:0 10px 0 var(--blue)}
+.wrap{max-width:860px;margin:0 auto}
+h1{font-size:clamp(1.8rem,5vw,2.8rem);font-weight:900;letter-spacing:.04em;line-height:1.3}
+header p{margin-top:10px;opacity:.9;font-weight:500}
+main{padding:44px 20px 64px}
+h2{font-size:1.15rem;font-weight:900;color:var(--blue);padding-bottom:6px;border-bottom:3px solid var(--blue);margin:40px 0 14px}
+h2:first-child{margin-top:0}
+ul{list-style:none;padding:0;display:grid;gap:10px}
+a.app{display:flex;gap:16px;align-items:center;padding:14px 16px;border:2px solid var(--blue-pale);border-radius:14px;text-decoration:none;color:inherit;background:var(--white)}
+a.app:hover{border-color:var(--blue);background:var(--blue-pale)}
+a.app:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.icon{flex:none;width:56px;height:56px;border-radius:12px;background:var(--blue-pale);display:grid;place-items:center;font-size:1.8rem}
+.name{font-weight:700;font-size:1.1rem}
+.desc{color:var(--sub);font-size:.92rem}
+.new{display:inline-block;margin-left:8px;padding:0 8px;border-radius:99px;background:var(--blue);color:var(--white);font-size:.75rem;vertical-align:2px}
+footer{text-align:center;color:var(--sub);font-size:.85rem;padding:24px 20px 40px}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>先生のためのアプリ置き場</h1>
+  <p>授業・テスト・校務で使える小さな道具。インストール不要、開くだけで使えます。</p>
+</div></header>
+
+<main class="wrap" id="list"></main>
+
+<footer>作成：<span id="author"></span></footer>
+
+<script>
+// ===== ここを書き換える =====
+const AUTHOR = "@suika_ed";   // フッターの作成者名
+
+// path：このページから見たフォルダ名（例 kanji/ ）。外部URLもそのまま書ける
+// updated：更新日。14日以内なら自動で「NEW」がつく
+const APPS = [
+  { cat:"テスト・プリント", icon:"✏️", name:"漢字50問テスト作成", desc:"1〜6年対応。A3縦書き、ルビ・1画目サポートつきで刷り分け", path:"kanji/",  updated:"2026-10-06" },
+  { cat:"テスト・プリント", icon:"🔤", name:"ローマ字プリントメーカー", desc:"ローマ字練習プリントをその場で作成", path:"romaji/", updated:"2026-09-23" },
+  { cat:"体育",             icon:"🏃", name:"体育記録アプリ", desc:"50m走・持久走の記録をタブレットで入力し、Excelで出力", path:"taiiku/", updated:"2026-09-21" },
+];
+// ===========================
+
+document.getElementById("author").textContent = AUTHOR;
+const today = new Date();
+const isNew = d => (today - new Date(d)) / 864e5 <= 14;
+const cats = [...new Set(APPS.map(a => a.cat))];
+document.getElementById("list").innerHTML = cats.map(c => `
+  <h2>${c}</h2>
+  <ul>${APPS.filter(a => a.cat === c).map(a => `
+    <li><a class="app" href="${a.path}">
+      <span class="icon">${a.icon}</span>
+      <span><span class="name">${a.name}</span>${isNew(a.updated) ? '<span class="new">NEW</span>' : ''}<br>
+      <span class="desc">${a.desc}</span></span>
+    </a></li>`).join("")}
+  </ul>`).join("");
+</script>
+</body>
+</html>
