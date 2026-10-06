@@ -1,0 +1,870 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>体育記録ラップ</title>
+<style>
+/* ===== トークン ===== */
+:root{
+  --ink:#0B1A2B; --ink-2:#3C5573; --ink-3:#7C93AD;
+  --paper:#FFFFFF; --ground:#E9EFF6; --line:#C9D8E6;
+  --blue:#0B5FD0; --blue-soft:#DCEAFB;
+  --done:#0E6B41; --done-soft:#D7F0E2;
+  --stop:#B21F35;
+  --c1:#0B5FD0; --c2:#00786E; --c3:#8A4B00; --c4:#6B3FA0;
+  --c1s:#DCEAFB; --c2s:#D2EFEB; --c3s:#F6E6D2; --c4s:#EAE1F6;
+  --shadow:0 1px 0 rgba(11,26,43,.10), 0 6px 16px -10px rgba(11,26,43,.45);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#EAF2FA; --ink-2:#A8BED6; --ink-3:#6E88A4;
+    --paper:#101B28; --ground:#070E16; --line:#26384C;
+    --blue:#5AA0FF; --blue-soft:#15304F;
+    --done:#5FD6A0; --done-soft:#0E3527;
+    --stop:#FF7A8C;
+    --c1:#5AA0FF; --c2:#3FCFBE; --c3:#E8A34B; --c4:#B694F0;
+    --c1s:#15304F; --c2s:#0B3A36; --c3s:#3A2A10; --c4s:#2A1F42;
+    --shadow:0 1px 0 rgba(0,0,0,.4), 0 6px 16px -10px rgba(0,0,0,.8);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#EAF2FA; --ink-2:#A8BED6; --ink-3:#6E88A4;
+  --paper:#101B28; --ground:#070E16; --line:#26384C;
+  --blue:#5AA0FF; --blue-soft:#15304F;
+  --done:#5FD6A0; --done-soft:#0E3527;
+  --stop:#FF7A8C;
+  --c1:#5AA0FF; --c2:#3FCFBE; --c3:#E8A34B; --c4:#B694F0;
+  --c1s:#15304F; --c2s:#0B3A36; --c3s:#3A2A10; --c4s:#2A1F42;
+  --shadow:0 1px 0 rgba(0,0,0,.4), 0 6px 16px -10px rgba(0,0,0,.8);
+  color-scheme:dark;
+}
+
+/* ===== ベース ===== */
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{
+  margin:0; background:var(--ground); color:var(--ink); font-size:14px;
+  font-family:"BIZ UDPGothic","UD デジタル 教科書体 NP-R","Hiragino Sans","Hiragino Kaku Gothic ProN",Meiryo,"Noto Sans JP",system-ui,sans-serif;
+  -webkit-text-size-adjust:100%; overscroll-behavior:none;
+}
+img{max-width:100%}
+.num{font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Courier New",monospace;font-variant-numeric:tabular-nums}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input{font-family:inherit}
+:where(button,input,[tabindex]):focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.tap{-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none}
+
+/* ===== 骨格 ===== */
+.app{height:100%;display:flex;flex-direction:column}
+.hdr{flex:0 0 auto;background:var(--paper);border-bottom:1px solid var(--line);padding:8px 12px}
+.hdrTop{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.hdrTop .g{font-weight:700;font-size:15px}
+.hdrTop .e{font-size:15px;font-weight:700;color:var(--blue)}
+.hdrTop .d{font-size:12px;color:var(--ink-3);margin-left:auto}
+.pane{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+.pane.scroll{overflow-y:auto;display:block}
+.grow{flex:1 1 auto;min-height:0;overflow:auto}
+.pad{padding:12px}
+.notice{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:13px;background:var(--blue-soft)}
+.notice .t{font-weight:700}
+.notice button{margin-left:auto}
+
+/* ===== 部品 ===== */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px}
+.btn{border-radius:12px;font-weight:700;border:2px solid transparent;padding:12px 10px;font-size:16px}
+.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.stopc{background:var(--stop);color:#fff;border-color:var(--stop)}
+.btn.ghost{background:var(--paper);color:var(--ink);border-color:var(--line)}
+.btn.danger{background:transparent;color:var(--stop);border-color:var(--stop)}
+.btn[disabled]{opacity:.38;cursor:default}
+.btn.sm{padding:7px 12px;font-size:14px}
+.seg{background:var(--ground);border:1px solid var(--line);border-radius:12px;padding:3px;display:flex;gap:3px}
+.seg button{flex:1;border-radius:9px;padding:9px 4px;font-weight:700;color:var(--ink-2);font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--blue);color:#fff}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.row2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.row4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.field{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:10px 12px;width:100%;font-size:16px}
+.lbl{display:grid;gap:6px}
+.lbl>span{font-size:13px;font-weight:700;color:var(--ink-2)}
+.hint{font-size:12.5px;color:var(--ink-3)}
+
+/* クラスバッジ */
+.cb{display:inline-block;border-radius:7px;padding:1px 7px;font-size:13px;font-weight:700}
+.cb1{background:var(--c1s);color:var(--c1)} .cb2{background:var(--c2s);color:var(--c2)}
+.cb3{background:var(--c3s);color:var(--c3)} .cb4{background:var(--c4s);color:var(--c4)}
+
+/* 時計 */
+.clockBox{padding:12px;background:var(--paper);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+#clock{font-size:clamp(42px,14vw,68px);font-weight:700;line-height:1;text-align:center}
+#clockHint{text-align:center;font-size:13px;color:var(--ink-2);margin-top:6px}
+.clockBox .row3{margin-top:12px}
+
+/* レーン */
+.lanes{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lane{background:var(--paper);border:2px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  min-height:96px;padding:8px 4px;transition:transform .06s ease}
+.lane:active{transform:scale(.97)}
+.lane .laneno{font-size:11px;color:var(--ink-3);letter-spacing:.08em}
+.lane .who{font-size:19px;font-weight:700;line-height:1.15;text-align:center}
+.lane .tm{font-size:22px;font-weight:700;line-height:1}
+.lane .sub{font-size:12px;color:var(--ink-3)}
+.lane[data-s="ready"]{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft),var(--shadow)}
+.lane[data-s="timed"]{background:var(--done-soft);border-color:var(--done)}
+.lane[data-s="timed"] .tm{color:var(--done)}
+.lane[data-s="orphan"]{border-color:var(--stop);border-style:dashed}
+.lane[data-s="orphan"] .tm{color:var(--stop)}
+.lane[data-s="orphan"] .sub{color:var(--stop)}
+.lane[data-s="empty"]{border-style:dashed}
+.lane[data-s="empty"] .who{color:var(--blue)}
+
+.raceHead{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.raceHead .n{font-weight:700;font-size:16px}
+.raceHead button{margin-left:auto;font-size:13px;font-weight:700;color:var(--ink-3)}
+
+.stat{padding:8px 4px;text-align:center}
+.stat .k{font-size:11px;color:var(--ink-3)}
+.stat .v{font-size:18px;font-weight:700}
+
+/* 表 */
+.tableWrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:nth-child(3),td:nth-child(3){text-align:left}
+thead th{position:sticky;top:0;background:var(--paper);color:var(--ink-2);font-size:12px;z-index:1}
+tbody tr{cursor:pointer}
+
+/* シート */
+.sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;background:rgba(7,14,22,.55)}
+.sheet>div{background:var(--paper);width:100%;max-width:460px;border-radius:18px 18px 0 0;
+  padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));border:1px solid var(--line);
+  max-height:88vh;overflow-y:auto}
+.sheetHead{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sheetHead .t{font-size:16px;font-weight:700}
+.sheetHead button{margin-left:auto}
+.pkGrid{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(58px,1fr))}
+.pk{background:var(--paper);border:2px solid var(--line);border-radius:11px;min-height:56px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700}
+.pk .pn{font-size:20px;line-height:1}
+.pk .pt{font-size:11px;line-height:1;margin-top:3px;color:var(--ink-3)}
+.pk[data-done="1"]{background:var(--ground);color:var(--ink-3);border-style:dashed}
+.pk:active{background:var(--blue-soft)}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.key{background:var(--paper);border:2px solid var(--line);border-radius:12px;font-size:24px;font-weight:700;padding:14px 0}
+.key:active{background:var(--blue-soft)}
+#kpEcho{font-size:38px;font-weight:700;text-align:center;min-height:44px;margin:8px 0}
+#kpParsed{text-align:center;font-size:13px;color:var(--ink-2);margin-bottom:12px}
+textarea.field{height:200px;white-space:pre;font-size:13px}
+
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));
+  padding:10px 16px;border-radius:12px;font-size:14px;font-weight:700;z-index:60;
+  background:var(--ink);color:var(--paper);box-shadow:var(--shadow)}
+
+.footBar{flex:0 0 auto;background:var(--paper);border-top:1px solid var(--line);
+  padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px))}
+.setupCard{max-width:520px;margin:0 auto;display:grid;gap:16px;padding:16px}
+.divider{border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="app">
+  <header class="hdr">
+    <div class="hdrTop">
+      <span class="g" id="hdrGrade"></span>
+      <span class="e" id="hdrEvent"></span>
+      <span class="d num" id="hdrDate"></span>
+    </div>
+    <div class="seg" role="tablist">
+      <button class="tap" role="tab" data-tab="measure" aria-pressed="true">計測</button>
+      <button class="tap" role="tab" data-tab="list" aria-pressed="false">一覧・出力</button>
+      <button class="tap" role="tab" data-tab="setup" aria-pressed="false">設定</button>
+    </div>
+  </header>
+
+  <div class="notice" id="sampleBar">
+    <span class="t">サンプルの記録が入っています</span>
+    <button class="btn primary sm tap" id="clearSample">消して始める</button>
+  </div>
+  <div class="notice" id="storageBar" hidden style="background:var(--stop);color:#fff">
+    <span class="t">このブラウザでは自動保存が使えません。計測が終わったら必ずExcelに出してください。</span>
+  </div>
+
+  <!-- ===== 計測 ===== -->
+  <section class="pane scroll" id="tab-measure">
+    <div class="clockBox">
+      <div id="clock" class="num">0.00</div>
+      <div id="clockHint"></div>
+      <div class="row3">
+        <button class="btn primary tap" id="btnStart">スタート</button>
+        <button class="btn ghost tap" id="btnReset">リセット</button>
+        <button class="btn ghost tap" id="btnUndo" disabled>1つ戻す</button>
+      </div>
+    </div>
+
+    <div class="pad">
+      <div class="raceHead">
+        <span class="n" id="raceNo"></span>
+        <button class="tap" id="clearRace">この組をやり直す</button>
+      </div>
+      <div class="lanes" id="lanes"></div>
+      <button class="btn primary tap" id="btnNext" style="width:100%;margin-top:12px;padding:16px;font-size:17px">この組を確定 ▶ 次の組へ</button>
+      <p class="hint" id="raceHint" style="margin:8px 0 0"></p>
+    </div>
+
+    <div class="pad" style="padding-top:0">
+      <div class="card" style="padding:12px">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
+          <span style="font-size:13px;font-weight:700;color:var(--ink-2)">記録ずみ</span>
+          <span class="num" id="progTotal" style="margin-left:auto;font-size:15px;font-weight:700"></span>
+        </div>
+        <div class="row4" id="progByClass"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 一覧・出力 ===== -->
+  <section class="pane" id="tab-list" hidden>
+    <div style="flex:0 0 auto;background:var(--paper);border-bottom:1px solid var(--line);padding:12px">
+      <div class="seg" id="filterSeg" style="margin-bottom:8px">
+        <button class="tap" data-f="all" aria-pressed="true">全体</button>
+        <button class="tap" data-f="1" aria-pressed="false">1組</button>
+        <button class="tap" data-f="2" aria-pressed="false">2組</button>
+        <button class="tap" data-f="3" aria-pressed="false">3組</button>
+        <button class="tap" data-f="4" aria-pressed="false">4組</button>
+      </div>
+      <div class="seg" id="sortSeg">
+        <button class="tap" data-s="no" aria-pressed="true">クラス・番号順</button>
+        <button class="tap" data-s="time" aria-pressed="false">タイム順（速い順）</button>
+      </div>
+      <div class="row3" style="margin-top:12px">
+        <div class="card stat"><div class="k">記録ずみ</div><div class="v num" id="sumDone"></div></div>
+        <div class="card stat"><div class="k">最速</div><div class="v num" id="sumBest"></div></div>
+        <div class="card stat"><div class="k">平均</div><div class="v num" id="sumAvg"></div></div>
+      </div>
+    </div>
+
+    <div class="grow pad">
+      <div class="card tableWrap">
+        <table class="num" id="table"></table>
+      </div>
+      <p class="hint" style="margin:8px 0 16px">行をタップするとタイムを直せます。「秒」列は計算用の数値です。</p>
+    </div>
+
+    <div class="footBar row2">
+      <button class="btn primary tap" id="expXlsx">Excelで保存</button>
+      <button class="btn ghost tap" id="expCsv">CSVで保存</button>
+      <button class="btn ghost tap" id="copyTable">表をコピー</button>
+      <button class="btn ghost tap" id="copyTimes">タイム列だけコピー</button>
+    </div>
+  </section>
+
+  <!-- ===== 設定 ===== -->
+  <section class="pane scroll" id="tab-setup" hidden>
+    <div class="card setupCard" style="margin:12px auto">
+      <label class="lbl"><span>学年</span><input id="setGrade" class="field" type="text"></label>
+      <label class="lbl"><span>種目</span>
+        <input id="setEvent" class="field" type="text" list="eventList">
+        <datalist id="eventList">
+          <option value="50m走"></option><option value="100m走"></option>
+          <option value="持久走"></option><option value="ハードル走"></option><option value="リレー"></option>
+        </datalist>
+      </label>
+      <label class="lbl"><span>実施日</span><input id="setDate" class="field num" type="date"></label>
+      <label class="lbl"><span>1組あたりで走る人数（レーン数）</span>
+        <input id="setLaneCount" class="field num" type="number" min="2" max="8" step="1"></label>
+      <div class="lbl">
+        <span>各クラスの人数</span>
+        <div class="row4">
+          <label class="lbl" style="text-align:center"><span><span class="cb cb1">1組</span></span><input id="cnt1" class="field num" style="text-align:center" type="number" min="0" max="45"></label>
+          <label class="lbl" style="text-align:center"><span><span class="cb cb2">2組</span></span><input id="cnt2" class="field num" style="text-align:center" type="number" min="0" max="45"></label>
+          <label class="lbl" style="text-align:center"><span><span class="cb cb3">3組</span></span><input id="cnt3" class="field num" style="text-align:center" type="number" min="0" max="45"></label>
+          <label class="lbl" style="text-align:center"><span><span class="cb cb4">4組</span></span><input id="cnt4" class="field num" style="text-align:center" type="number" min="0" max="45"></label>
+        </div>
+      </div>
+      <div class="divider">
+        <button class="btn danger tap" id="clearAll" style="width:100%">この種目の記録をすべて消す</button>
+        <p class="hint" style="margin:8px 0 0">記録はこの端末のブラウザに自動保存されます。別の端末には引き継がれないので、計測が終わったらExcelに出しておいてください。インターネットにつながっていなくても、すべての機能が使えます。</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- 選手ピッカー -->
+<div class="sheet" id="picker" hidden>
+  <div>
+    <div class="sheetHead">
+      <span class="t" id="pkTitle">選手を選ぶ</span>
+      <button class="btn ghost sm tap" id="pkClose">閉じる</button>
+    </div>
+    <div class="seg" id="pkClassSeg" style="margin-bottom:8px">
+      <button class="tap" data-c="1" aria-pressed="true">1組</button>
+      <button class="tap" data-c="2" aria-pressed="false">2組</button>
+      <button class="tap" data-c="3" aria-pressed="false">3組</button>
+      <button class="tap" data-c="4" aria-pressed="false">4組</button>
+    </div>
+    <p class="hint" style="margin:0 0 8px">うすい番号は記録ずみ（押すと上書きします）</p>
+    <div class="pkGrid" id="pkGrid"></div>
+  </div>
+</div>
+
+<!-- テンキー -->
+<div class="sheet" id="keypad" hidden>
+  <div>
+    <div class="sheetHead">
+      <span class="t" id="kpWho"></span>
+      <button class="btn ghost sm tap" id="kpClose">閉じる</button>
+    </div>
+    <div id="kpEcho" class="num">—</div>
+    <div id="kpParsed"></div>
+    <div class="keys">
+      <button class="key tap num" data-k="1">1</button><button class="key tap num" data-k="2">2</button><button class="key tap num" data-k="3">3</button>
+      <button class="key tap num" data-k="4">4</button><button class="key tap num" data-k="5">5</button><button class="key tap num" data-k="6">6</button>
+      <button class="key tap num" data-k="7">7</button><button class="key tap num" data-k="8">8</button><button class="key tap num" data-k="9">9</button>
+      <button class="key tap num" data-k=".">.</button><button class="key tap num" data-k="0">0</button><button class="key tap num" data-k=":">:</button>
+    </div>
+    <div class="row2" style="margin-top:8px">
+      <button class="btn ghost tap" id="kpBack">← 消す</button>
+      <button class="btn primary tap" id="kpOk">決定</button>
+    </div>
+    <button class="btn ghost tap" id="kpDelete" style="width:100%;margin-top:8px;color:var(--stop)">この記録を削除</button>
+  </div>
+</div>
+
+<!-- レーン操作 -->
+<div class="sheet" id="laneSheet" hidden>
+  <div>
+    <div class="sheetHead">
+      <span class="t" id="lsTitle"></span>
+      <button class="btn ghost sm tap" id="lsClose">閉じる</button>
+    </div>
+    <div style="display:grid;gap:8px">
+      <button class="btn primary tap" id="lsPick">選手を選びなおす</button>
+      <button class="btn ghost tap" id="lsType">タイムを手入力する</button>
+      <button class="btn ghost tap" id="lsClear" style="color:var(--stop)">このレーンを空にする</button>
+    </div>
+  </div>
+</div>
+
+<!-- コピー用 -->
+<div class="sheet" id="copySheet" hidden>
+  <div>
+    <div class="sheetHead">
+      <span class="t">全部選んでコピーしてください</span>
+      <button class="btn ghost sm tap" id="copyClose">閉じる</button>
+    </div>
+    <textarea class="field num" id="copyArea" readonly></textarea>
+  </div>
+</div>
+
+<div id="toast" hidden></div>
+
+<script>
+(function(){
+  "use strict";
+  const KEY="taiiku-kiroku-v2", $=(s)=>document.querySelector(s);
+  const emptyLanes=(n)=>new Array(n).fill(null);
+  const d=new Date();
+  const iso=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+
+  let S={
+    grade:"3年", event:"50m走", date:iso,
+    counts:{1:35,2:34,3:35,4:33},
+    laneCount:4,
+    results:[],
+    race:{g:1, lanes:[null,null,null,null]},
+    sample:true
+  };
+  let undoStack=[], filter="all", sortMode="no", storageOK=true;
+
+  const SAMPLE={
+    results:[
+      {c:1,n:5,t:9.12,g:1},{c:3,n:12,t:8.44,g:1},{c:2,n:21,t:9.67,g:1},{c:4,n:3,t:8.91,g:1},
+      {c:2,n:7,t:8.20,g:2},{c:4,n:18,t:10.05,g:2},{c:1,n:30,t:9.30,g:2},{c:3,n:2,t:8.75,g:2}
+    ],
+    race:{g:3, lanes:[{c:1,n:11,t:null},{c:4,n:25,t:null},{c:2,n:14,t:null},null]}
+  };
+
+  function load(){
+    try{
+      localStorage.setItem(KEY+"-probe","1"); localStorage.removeItem(KEY+"-probe");
+      const raw=localStorage.getItem(KEY);
+      if(raw){ S=Object.assign(S,JSON.parse(raw)); return; }
+    }catch(e){ storageOK=false; }
+    S.results=SAMPLE.results.slice(); S.race=JSON.parse(JSON.stringify(SAMPLE.race)); S.sample=true;
+  }
+  function save(){ if(!storageOK) return; try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){ storageOK=false; $("#storageBar").hidden=false; } }
+
+  /* ---- 時間 ---- */
+  function fmt(sec){
+    if(sec==null) return "";
+    if(sec<60) return sec.toFixed(2);
+    const m=Math.floor(sec/60), s=sec-m*60;
+    return m+":"+(s<10?"0":"")+s.toFixed(2);
+  }
+  function parseInput(str){
+    if(!str) return null;
+    if(str.includes(":")){
+      const p=str.split(":"); if(p.length!==2) return null;
+      const m=parseFloat(p[0]||"0"), s=parseFloat(p[1]||"0");
+      if(isNaN(m)||isNaN(s)) return null;
+      return Math.round((m*60+s)*100)/100;
+    }
+    const v=parseFloat(str); return isNaN(v)?null:Math.round(v*100)/100;
+  }
+
+  /* ---- ストップウォッチ ---- */
+  let running=false,t0=0,elapsed=0,raf=0;
+  const clk=()=>performance&&performance.now?performance.now():Date.now();
+  function now(){ return running? elapsed+(clk()-t0)/1000 : elapsed; }
+  function tick(){ $("#clock").textContent=fmt(Math.floor(now()*100)/100); if(running) raf=requestAnimationFrame(tick); }
+  function start(){ if(running) return; running=true;t0=clk();raf=requestAnimationFrame(tick);
+    $("#btnStart").textContent="ストップ"; $("#btnStart").classList.remove("primary"); $("#btnStart").classList.add("stopc"); render(); }
+  function stop(){ if(!running) return; elapsed=now(); running=false; cancelAnimationFrame(raf);
+    $("#btnStart").textContent="スタート"; $("#btnStart").classList.remove("stopc"); $("#btnStart").classList.add("primary"); tick(); render(); }
+  function resetWatch(){ running=false;cancelAnimationFrame(raf);elapsed=0;
+    $("#btnStart").textContent="スタート"; $("#btnStart").classList.remove("stopc"); $("#btnStart").classList.add("primary"); tick(); render(); }
+
+  /* ---- 取り消し ---- */
+  function snap(){ undoStack.push(JSON.stringify({results:S.results,race:S.race})); if(undoStack.length>30) undoStack.shift(); }
+  function undo(){
+    const u=undoStack.pop(); if(!u) return;
+    const o=JSON.parse(u); S.results=o.results; S.race=o.race; S.sample=false; save(); render(); toast("1つ戻しました");
+  }
+  function commit(){ S.sample=false; save(); render(); }
+
+  function findRec(c,n){ return S.results.find(r=>r.c===c&&r.n===n)||null; }
+  function inRace(c,n){ return S.race.lanes.some(l=>l&&l.c===c&&l.n===n); }
+
+  function withRanks(){
+    const rows=S.results.map(r=>Object.assign({},r));
+    const all=rows.slice().sort((a,b)=>a.t-b.t);
+    let rank=0,prev=null,seen=0;
+    all.forEach(r=>{ seen++; if(prev===null||r.t>prev){rank=seen;prev=r.t;} r.rank=rank; });
+    [1,2,3,4].forEach(c=>{
+      const g=rows.filter(r=>r.c===c).sort((a,b)=>a.t-b.t);
+      let k=0,p=null,s2=0;
+      g.forEach(r=>{ s2++; if(p===null||r.t>p){k=s2;p=r.t;} r.crank=k; });
+    });
+    return rows;
+  }
+
+  /* ---- 描画 ---- */
+  function laneState(l){
+    if(!l) return "empty";
+    if(l.t!=null && l.c==null) return "orphan";
+    if(l.t!=null) return "timed";
+    return running? "ready" : "set";
+  }
+  function whoHtml(c,n){ return '<span class="cb cb'+c+'">'+c+'組</span> <span class="num">'+n+'</span>'; }
+
+  function renderLanes(){
+    let h="";
+    for(let i=0;i<S.race.lanes.length;i++){
+      const l=S.race.lanes[i], st=laneState(l);
+      let inner='<span class="laneno">レーン'+(i+1)+'</span>';
+      if(st==="empty"){
+        inner += running ? '<span class="who">タップで<br>タイム記録</span>' : '<span class="who">＋ 選手を選ぶ</span>';
+      }else if(st==="orphan"){
+        inner += '<span class="tm num">'+fmt(l.t)+'</span><span class="sub">タップして選手を選ぶ</span>';
+      }else if(st==="timed"){
+        inner += '<span class="who">'+whoHtml(l.c,l.n)+'</span><span class="tm num">'+fmt(l.t)+'</span>';
+      }else{
+        inner += '<span class="who">'+whoHtml(l.c,l.n)+'</span><span class="sub">'+(running?"ゴールしたらタップ":"待機中")+'</span>';
+      }
+      h += '<button class="lane tap" data-i="'+i+'" data-s="'+st+'">'+inner+'</button>';
+    }
+    $("#lanes").innerHTML=h;
+
+    const filled=S.race.lanes.filter(l=>l&&l.t!=null).length;
+    const orph=S.race.lanes.filter(l=>l&&l.t!=null&&l.c==null).length;
+    $("#raceNo").textContent="第 "+S.race.g+" 組";
+    $("#btnNext").disabled = filled===0;
+    $("#raceHint").textContent = orph
+      ? "選手が決まっていないタイムが "+orph+" 件あります。赤いレーンをタップして選んでください。"
+      : (filled ? "確定すると "+filled+" 人分が記録に入り、次の組の入力に進みます。"
+                : "レーンをタップして走る"+S.race.lanes.length+"人を選び、スタートしてください。");
+    $("#clockHint").textContent = running
+      ? "ゴールした順にレーンをタップ"
+      : "レーンに選手をセットしてスタート（止まっている間は手入力できます）";
+  }
+
+  function renderProgress(){
+    const total=[1,2,3,4].reduce((a,c)=>a+(S.counts[c]||0),0);
+    $("#progTotal").textContent=S.results.length+" / "+total+" 人";
+    let h="";
+    [1,2,3,4].forEach(c=>{
+      const done=S.results.filter(r=>r.c===c).length, cnt=S.counts[c]||0;
+      h+='<div class="stat"><div class="k"><span class="cb cb'+c+'">'+c+'組</span></div><div class="v num">'+done+"/"+cnt+'</div></div>';
+    });
+    $("#progByClass").innerHTML=h;
+  }
+
+  function renderTable(){
+    let rows=withRanks();
+    if(filter!=="all") rows=rows.filter(r=>r.c===parseInt(filter,10));
+    rows.sort(sortMode==="no" ? (a,b)=>a.c-b.c||a.n-b.n : (a,b)=>a.t-b.t||a.c-b.c||a.n-b.n);
+
+    let h='<thead><tr><th>全体</th><th>組内</th><th>クラス</th><th>番号</th><th>タイム</th><th>秒</th><th>組</th></tr></thead><tbody>';
+    rows.forEach(r=>{
+      h+='<tr class="tap" data-c="'+r.c+'" data-n="'+r.n+'">'
+       + '<td'+(r.rank===1?' style="color:var(--blue);font-weight:700"':'')+'>'+r.rank+'</td>'
+       + '<td style="color:var(--ink-2)">'+r.crank+'</td>'
+       + '<td><span class="cb cb'+r.c+'">'+r.c+'組</span></td>'
+       + '<td>'+r.n+'</td>'
+       + '<td style="font-weight:700">'+fmt(r.t)+'</td>'
+       + '<td style="color:var(--ink-2)">'+r.t.toFixed(2)+'</td>'
+       + '<td style="color:var(--ink-3)">'+r.g+'</td></tr>';
+    });
+    if(!rows.length) h+='<tr><td colspan="7" style="text-align:center;color:var(--ink-3);padding:24px 0">まだ記録がありません</td></tr>';
+    $("#table").innerHTML=h+'</tbody>';
+
+    const ts=rows.map(r=>r.t);
+    const cnt = filter==="all" ? [1,2,3,4].reduce((a,c)=>a+(S.counts[c]||0),0) : (S.counts[parseInt(filter,10)]||0);
+    $("#sumDone").textContent=ts.length+"/"+cnt;
+    $("#sumBest").textContent=ts.length?fmt(Math.min.apply(null,ts)):"—";
+    $("#sumAvg").textContent =ts.length?fmt(Math.round(ts.reduce((a,b)=>a+b,0)/ts.length*100)/100):"—";
+  }
+
+  function render(){
+    $("#hdrGrade").textContent=S.grade;
+    $("#hdrEvent").textContent=S.event;
+    $("#hdrDate").textContent=S.date.replace(/-/g,"/");
+    $("#btnUndo").disabled=undoStack.length===0;
+    $("#sampleBar").hidden=!S.sample;
+    renderLanes(); renderProgress(); renderTable();
+  }
+
+  let toastTimer=0;
+  function toast(m){ const e=$("#toast"); e.textContent=m; e.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>{e.hidden=true;},1900); }
+
+  /* ---- 選手ピッカー ---- */
+  let pkClass=1, pkCb=null;
+  function openPicker(title, cb, preferClass){
+    pkCb=cb; if(preferClass) pkClass=preferClass;
+    $("#pkTitle").textContent=title;
+    document.querySelectorAll("#pkClassSeg button").forEach(b=>b.setAttribute("aria-pressed", parseInt(b.dataset.c,10)===pkClass));
+    renderPicker(); $("#picker").hidden=false;
+  }
+  function closePicker(){ $("#picker").hidden=true; pkCb=null; }
+  function renderPicker(){
+    const cnt=S.counts[pkClass]||0; let h="";
+    for(let n=1;n<=cnt;n++){
+      const r=findRec(pkClass,n), used=inRace(pkClass,n);
+      h+='<button class="pk tap" data-n="'+n+'" data-done="'+(r?1:0)+'"'+(used?' disabled style="opacity:.3"':'')+'>'
+        +'<span class="pn num">'+n+'</span><span class="pt num">'+(r?fmt(r.t):(used?"走行中":"&nbsp;"))+'</span></button>';
+    }
+    $("#pkGrid").innerHTML=h;
+  }
+  document.querySelectorAll("#pkClassSeg button").forEach(b=>{
+    b.onclick=()=>{ pkClass=parseInt(b.dataset.c,10);
+      document.querySelectorAll("#pkClassSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+      renderPicker(); };
+  });
+  $("#pkClose").onclick=closePicker;
+  $("#picker").addEventListener("click",(e)=>{
+    if(e.target===$("#picker")){ closePicker(); return; }
+    const b=e.target.closest("[data-n]"); if(!b||b.disabled) return;
+    const n=parseInt(b.dataset.n,10), cb=pkCb;
+    closePicker(); if(cb) cb(pkClass,n);
+  });
+
+  /* ---- テンキー ---- */
+  let kpTarget=null, kpBuf="";
+  function openKeypad(target,label,current){
+    kpTarget=target; kpBuf="";
+    $("#kpWho").innerHTML=label;
+    $("#kpDelete").hidden = !(target.kind==="result");
+    $("#keypad").dataset.cur = current==null?"":current;
+    $("#keypad").hidden=false; updateKp();
+  }
+  function closeKeypad(){ $("#keypad").hidden=true; kpTarget=null; }
+  function updateKp(){
+    $("#kpEcho").textContent=kpBuf||"—";
+    const v=parseInput(kpBuf), cur=$("#keypad").dataset.cur;
+    $("#kpParsed").textContent = v==null
+      ? (cur?("いまの記録："+fmt(parseFloat(cur))):"数字を入力してください（例 8.45／3:45.6）")
+      : "→ "+fmt(v)+"（"+v.toFixed(2)+"秒）";
+  }
+  $("#keypad").addEventListener("click",(e)=>{
+    if(e.target===$("#keypad")) closeKeypad();
+    const k=e.target.closest("[data-k]"); if(k){ kpBuf+=k.dataset.k; updateKp(); }
+  });
+  $("#kpBack").onclick=()=>{ kpBuf=kpBuf.slice(0,-1); updateKp(); };
+  $("#kpClose").onclick=closeKeypad;
+  $("#kpOk").onclick=()=>{
+    const v=parseInput(kpBuf); if(v==null){ toast("数字が入っていません"); return; }
+    snap();
+    if(kpTarget.kind==="lane"){ S.race.lanes[kpTarget.i].t=v; }
+    else { const r=findRec(kpTarget.c,kpTarget.n); if(r) r.t=v; }
+    closeKeypad(); commit(); toast("タイムを入れました");
+  };
+  $("#kpDelete").onclick=()=>{
+    snap(); S.results=S.results.filter(r=>!(r.c===kpTarget.c&&r.n===kpTarget.n));
+    closeKeypad(); commit(); toast("記録を削除しました");
+  };
+
+  /* ---- レーン操作 ---- */
+  let lsIndex=null;
+  function openLaneSheet(i){
+    lsIndex=i; const l=S.race.lanes[i];
+    $("#lsTitle").innerHTML="レーン"+(i+1)+"　"+(l&&l.c?whoHtml(l.c,l.n):"");
+    $("#lsType").hidden = !(l&&l.c);
+    $("#laneSheet").hidden=false;
+  }
+  function closeLaneSheet(){ $("#laneSheet").hidden=true; lsIndex=null; }
+  $("#lsClose").onclick=closeLaneSheet;
+  $("#laneSheet").addEventListener("click",(e)=>{ if(e.target===$("#laneSheet")) closeLaneSheet(); });
+  $("#lsPick").onclick=()=>{ const i=lsIndex; closeLaneSheet(); pickInto(i); };
+  $("#lsType").onclick=()=>{
+    const i=lsIndex, l=S.race.lanes[i]; closeLaneSheet();
+    openKeypad({kind:"lane",i:i}, "レーン"+(i+1)+"　"+whoHtml(l.c,l.n), l.t);
+  };
+  $("#lsClear").onclick=()=>{ snap(); S.race.lanes[lsIndex]=null; closeLaneSheet(); commit(); };
+
+  function pickInto(i){
+    const l=S.race.lanes[i];
+    openPicker("レーン"+(i+1)+"　選手を選ぶ", (c,n)=>{
+      snap();
+      const keepT = l&&l.t!=null ? l.t : null;
+      S.race.lanes[i]={c:c,n:n,t:keepT};
+      commit();
+      if(findRec(c,n)) toast(c+"組 "+n+"番は記録ずみです（確定すると上書き）");
+      const nx=S.race.lanes.findIndex(x=>x===null);
+      if(keepT===null && nx>=0 && !running) setTimeout(()=>pickInto(nx),120);
+    }, l&&l.c ? l.c : undefined);
+  }
+
+  $("#lanes").addEventListener("click",(e)=>{
+    const b=e.target.closest("[data-i]"); if(!b) return;
+    const i=parseInt(b.dataset.i,10), l=S.race.lanes[i];
+    if(running){
+      if(!l){ snap(); S.race.lanes[i]={c:null,n:null,t:Math.round(now()*100)/100}; commit(); toast("レーン"+(i+1)+"　"+fmt(S.race.lanes[i].t)); return; }
+      if(l.t==null){ snap(); l.t=Math.round(now()*100)/100; commit(); toast((l.c?l.c+"組 "+l.n+"番　":"")+fmt(l.t)); return; }
+      if(l.c==null){ pickInto(i); return; }
+      openLaneSheet(i); return;
+    }
+    if(!l || l.c==null){ pickInto(i); return; }
+    openLaneSheet(i);
+  });
+
+  $("#btnNext").onclick=()=>{
+    const orph=S.race.lanes.filter(l=>l&&l.t!=null&&l.c==null).length;
+    if(orph){ toast("選手が決まっていないタイムがあります"); return; }
+    snap();
+    S.race.lanes.forEach(l=>{
+      if(!l||l.t==null||l.c==null) return;
+      S.results=S.results.filter(r=>!(r.c===l.c&&r.n===l.n));
+      S.results.push({c:l.c,n:l.n,t:l.t,g:S.race.g});
+    });
+    S.race={g:S.race.g+1, lanes:emptyLanes(S.laneCount)};
+    resetWatch(); commit(); toast("第 "+(S.race.g-1)+" 組を記録しました");
+    $("#tab-measure").scrollTop=0;
+  };
+  $("#clearRace").onclick=()=>{ snap(); S.race.lanes=emptyLanes(S.laneCount); resetWatch(); commit(); };
+
+  $("#table").addEventListener("click",(e)=>{
+    const tr=e.target.closest("tr[data-c]"); if(!tr) return;
+    const c=parseInt(tr.dataset.c,10), n=parseInt(tr.dataset.n,10), r=findRec(c,n);
+    openKeypad({kind:"result",c:c,n:n}, whoHtml(c,n), r?r.t:null);
+  });
+
+  $("#btnStart").onclick=()=> running?stop():start();
+  $("#btnReset").onclick=()=> resetWatch();
+  $("#btnUndo").onclick=undo;
+  $("#clearSample").onclick=()=>{ S.results=[]; S.race={g:1,lanes:emptyLanes(S.laneCount)}; S.sample=false; undoStack=[]; save(); render(); toast("空の状態にしました"); };
+  $("#clearAll").onclick=()=>{ snap(); S.results=[]; S.race={g:1,lanes:emptyLanes(S.laneCount)}; commit(); toast("記録を消しました"); };
+
+  document.querySelectorAll('[data-tab]').forEach(b=>{
+    b.onclick=()=>{ document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute("aria-pressed",x===b));
+      ["measure","list","setup"].forEach(t=>{ $("#tab-"+t).hidden=(t!==b.dataset.tab); }); };
+  });
+  document.querySelectorAll("#filterSeg button").forEach(b=>{
+    b.onclick=()=>{ filter=b.dataset.f; document.querySelectorAll("#filterSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b)); renderTable(); };
+  });
+  document.querySelectorAll("#sortSeg button").forEach(b=>{
+    b.onclick=()=>{ sortMode=b.dataset.s; document.querySelectorAll("#sortSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b)); renderTable(); };
+  });
+
+  function bind(id,fn){ const el=$(id); el.addEventListener("input",()=>{ fn(el.value); save(); render(); }); }
+  bind("#setGrade",v=>S.grade=v); bind("#setEvent",v=>S.event=v); bind("#setDate",v=>S.date=v);
+  [1,2,3,4].forEach(c=> bind("#cnt"+c, v=>{ S.counts[c]=Math.min(45,Math.max(0,parseInt(v,10)||0)); }));
+
+  $("#setLaneCount").addEventListener("input",()=>{
+    const el=$("#setLaneCount");
+    const n=Math.min(8,Math.max(2,parseInt(el.value,10)||4));
+    const cur=S.race.lanes;
+    if(n<cur.length && cur.slice(n).some(l=>l)){ toast("いま使っているレーンがあるので減らせません"); el.value=cur.length; return; }
+    S.laneCount=n;
+    S.race.lanes = n>cur.length ? cur.concat(emptyLanes(n-cur.length)) : cur.slice(0,n);
+    save(); render();
+  });
+
+  /* ================= 出力 ================= */
+  function matrix(){
+    const rows=withRanks().sort((a,b)=> a.c-b.c || a.n-b.n);
+    const head=["クラス","出席番号","タイム","秒","学年順位","クラス内順位","組"];
+    const body=rows.map(r=>[ r.c+"組", r.n, fmt(r.t), Number(r.t.toFixed(2)), r.rank, r.crank, r.g ]);
+    return {title:S.grade+"　"+S.event+"　"+S.date.replace(/-/g,"/"), head:head, body:body};
+  }
+  function tsv(){ const m=matrix(); return [m.head].concat(m.body).map(r=>r.join("\t")).join("\n"); }
+  function csv(){
+    const m=matrix(), esc=v=>{const s=String(v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+    return "﻿"+[[m.title]].concat([m.head],m.body).map(r=>r.map(esc).join(",")).join("\r\n");
+  }
+  function fileBase(){ return S.date.replace(/-/g,"")+"_"+S.grade+"_"+S.event; }
+
+  /* ---- 自前のxlsx生成（ライブラリなし・オフラインOK） ---- */
+  const CRC=(function(){ const t=new Uint32Array(256);
+    for(let i=0;i<256;i++){ let c=i; for(let k=0;k<8;k++) c = c&1 ? 0xEDB88320^(c>>>1) : c>>>1; t[i]=c>>>0; }
+    return t; })();
+  function crc32(u8){ let c=0xFFFFFFFF; for(let i=0;i<u8.length;i++) c=CRC[(c^u8[i])&0xFF]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+  function zip(files){
+    const enc=new TextEncoder(), parts=[], central=[]; let offset=0, count=0, cdSize=0;
+    files.forEach(f=>{
+      const name=enc.encode(f.name);
+      const data=typeof f.data==="string"?enc.encode(f.data):f.data;
+      const crc=crc32(data);
+      const lh=new Uint8Array(30+name.length), dv=new DataView(lh.buffer);
+      dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+      dv.setUint16(8,0,true); dv.setUint16(10,0,true); dv.setUint16(12,0x2821,true);
+      dv.setUint32(14,crc,true); dv.setUint32(18,data.length,true); dv.setUint32(22,data.length,true);
+      dv.setUint16(26,name.length,true); dv.setUint16(28,0,true);
+      lh.set(name,30);
+      parts.push(lh,data);
+      const ch=new Uint8Array(46+name.length), cv=new DataView(ch.buffer);
+      cv.setUint32(0,0x02014b50,true); cv.setUint16(4,20,true); cv.setUint16(6,20,true);
+      cv.setUint16(8,0x0800,true); cv.setUint16(10,0,true);
+      cv.setUint16(12,0,true); cv.setUint16(14,0x2821,true);
+      cv.setUint32(16,crc,true); cv.setUint32(20,data.length,true); cv.setUint32(24,data.length,true);
+      cv.setUint16(28,name.length,true); cv.setUint16(30,0,true); cv.setUint16(32,0,true);
+      cv.setUint16(34,0,true); cv.setUint16(36,0,true); cv.setUint32(38,0,true);
+      cv.setUint32(42,offset,true); ch.set(name,46);
+      central.push(ch);
+      offset += lh.length+data.length; cdSize += ch.length; count++;
+    });
+    const cdOffset=offset;
+    const eo=new Uint8Array(22), ev=new DataView(eo.buffer);
+    ev.setUint32(0,0x06054b50,true); ev.setUint16(4,0,true); ev.setUint16(6,0,true);
+    ev.setUint16(8,count,true); ev.setUint16(10,count,true);
+    ev.setUint32(12,cdSize,true); ev.setUint32(16,cdOffset,true); ev.setUint16(20,0,true);
+    return new Blob(parts.concat(central,[eo]),{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+  }
+  function xe(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function colName(i){ let s=""; i++; while(i>0){ const m=(i-1)%26; s=String.fromCharCode(65+m)+s; i=(i-m-1)/26; } return s; }
+  function buildXlsx(){
+    const m=matrix();
+    const rows=[[m.title],[],m.head].concat(m.body);
+    let sd="";
+    rows.forEach((row,ri)=>{
+      let cells="";
+      row.forEach((v,ci)=>{
+        if(v===""||v==null) return;
+        const ref=colName(ci)+(ri+1);
+        const style=(ri===0||ri===2)?' s="1"':'';
+        if(typeof v==="number") cells+='<c r="'+ref+'"'+style+'><v>'+v+'</v></c>';
+        else cells+='<c r="'+ref+'" t="inlineStr"'+style+'><is><t>'+xe(v)+'</t></is></c>';
+      });
+      sd+='<row r="'+(ri+1)+'">'+cells+'</row>';
+    });
+    const widths=[10,11,12,10,11,13,8];
+    let cols="<cols>";
+    widths.forEach((w,i)=>{ cols+='<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>'; });
+    cols+="</cols>";
+    const af = m.body.length ? '<autoFilter ref="A3:'+colName(m.head.length-1)+(3+m.body.length)+'"/>' : '';
+    const sheet='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      +'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+      +'<sheetViews><sheetView workbookViewId="0"><pane ySplit="3" topLeftCell="A4" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'
+      +cols+'<sheetData>'+sd+'</sheetData>'+af+'</worksheet>';
+    const name=(S.event||"記録").replace(/[\[\]\*\?\/\\:]/g,"").slice(0,28)||"記録";
+    const files=[
+      {name:"[Content_Types].xml", data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        +'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        +'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        +'<Default Extension="xml" ContentType="application/xml"/>'
+        +'<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+        +'<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+        +'<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
+        +'</Types>'},
+      {name:"_rels/.rels", data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        +'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
+        +'</Relationships>'},
+      {name:"xl/workbook.xml", data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        +'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        +'<sheets><sheet name="'+xe(name)+'" sheetId="1" r:id="rId1"/></sheets></workbook>'},
+      {name:"xl/_rels/workbook.xml.rels", data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        +'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
+        +'<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
+        +'</Relationships>'},
+      {name:"xl/styles.xml", data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        +'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        +'<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>'
+        +'<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>'
+        +'<borders count="1"><border/></borders>'
+        +'<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+        +'<cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+        +'<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs>'
+        +'</styleSheet>'},
+      {name:"xl/worksheets/sheet1.xml", data:sheet}
+    ];
+    return zip(files);
+  }
+
+  /* ---- 保存（Artifact上ならcapability、ローカルHTMLならダウンロード） ---- */
+  let dl=null;
+  try{ const p=window.claude&&window.claude.use&&window.claude.use("downloads"); if(p&&p.then) p.then(x=>{dl=x;},function(){}); }catch(e){}
+
+  async function offer(filename, data, mime){
+    if(dl){
+      try{ await dl.save({filename:filename,data:data}); toast("保存しました"); return; }
+      catch(err){ if(err&&err.code==="declined") return; }
+    }
+    try{
+      const blob = data instanceof Blob ? data : new Blob([data],{type:mime||"application/octet-stream"});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");
+      a.href=url; a.download=filename; a.style.display="none";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),5000);
+      toast("ダウンロードしました");
+    }catch(e){ showCopy(tsv()); toast("保存できないのでコピー用に出しました"); }
+  }
+
+  $("#expCsv").onclick=()=> offer(fileBase()+".csv", csv(), "text/csv;charset=utf-8");
+  $("#expXlsx").onclick=()=>{
+    try{ offer(fileBase()+".xlsx", buildXlsx()); }
+    catch(e){ showCopy(tsv()); toast("Excelを作れなかったのでコピー用に出しました"); }
+  };
+
+  function showCopy(t){ $("#copyArea").value=t; $("#copySheet").hidden=false; $("#copyArea").select(); }
+  $("#copyClose").onclick=()=>{ $("#copySheet").hidden=true; };
+  $("#copySheet").addEventListener("click",e=>{ if(e.target===$("#copySheet")) $("#copySheet").hidden=true; });
+  async function copyText(t,label){
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText){ await navigator.clipboard.writeText(t); toast(label+"をコピーしました"); return; }
+      throw new Error("no clipboard");
+    }catch(e){ showCopy(t); }
+  }
+  $("#copyTable").onclick=()=> copyText(tsv(),"表");
+  $("#copyTimes").onclick=()=> copyText(matrix().body.map(r=>r[2]).join("\n"),"タイム列");
+
+  /* ---- 起動 ---- */
+  load();
+  if(!storageOK) $("#storageBar").hidden=false;
+  $("#setGrade").value=S.grade; $("#setEvent").value=S.event; $("#setDate").value=S.date;
+  [1,2,3,4].forEach(c=> $("#cnt"+c).value=S.counts[c]);
+  if(!S.laneCount) S.laneCount=S.race.lanes.length||4;
+  $("#setLaneCount").value=S.laneCount;
+  if(S.race.lanes.length<S.laneCount) S.race.lanes=S.race.lanes.concat(emptyLanes(S.laneCount-S.race.lanes.length));
+  resetWatch(); render();
+
+  document.addEventListener("keydown",e=>{
+    if(!$("#keypad").hidden||!$("#picker").hidden||!$("#copySheet").hidden||!$("#laneSheet").hidden) return;
+    if(e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+    if(e.code==="Space"){ e.preventDefault(); running?stop():start(); }
+  });
+})();
+</script>
