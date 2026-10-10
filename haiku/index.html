@@ -1008,14 +1008,38 @@ $('saveBtn').onclick=async()=>{
   try{
     const cv=await html2canvas($('submitCard'),{scale:2,backgroundColor:'#fbf7ec',useCORS:true,logging:false});
     const url=cv.toDataURL('image/png');
+    const fname=`haiku_${(S.name||'sakuhin').replace(/[\\/:*?"<>|\s]/g,'')}_${new Date().toISOString().slice(0,10)}.png`;
+    const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
+    let file=null;
+    try{
+      if(blob && typeof File==='function'){
+        const f=new File([blob],fname,{type:'image/png'});
+        if(navigator.canShare && navigator.share && navigator.canShare({files:[f]})) file=f;
+      }
+    }catch(e){}
     SE.pirorin();
     openModal(`
-      <div class="modal-msg">がぞうを <span class="em">ながおし</span> して<br>「<ruby>写真<rt>しゃしん</rt></ruby>に<ruby>追加<rt>ついか</rt></ruby>」を おしてね！📷</div>
+      <div class="modal-msg">${file
+        ? '👇 <span class="em">「<ruby>画像<rt>がぞう</rt></ruby>を ほぞん」</span>を おしてね！'
+        : 'がぞうを <span class="em">ながおし</span> して<br>「<ruby>写真<rt>しゃしん</rt></ruby>に<ruby>追加<rt>ついか</rt></ruby>」を おしてね！📷'}</div>
       <img src="${url}" alt="じここうしん カードの がぞう">
       <div class="modal-actions">
-        <a class="btn" href="${url}" download="haiku_${esc(S.name||'sakuhin')}_${new Date().toISOString().slice(0,10)}.png">💾 パソコンで ほぞん</a>
-        <button class="btn primary" data-close>とじる</button>
-      </div>`);
+        ${file?'<button class="btn primary big" id="photoSaveBtn">📷 <ruby>画像<rt>がぞう</rt></ruby>を ほぞん</button>':''}
+        <button class="btn" data-close>とじる</button>
+      </div>
+      ${file?'<p class="save-note">ひらいた メニューで<br>「<ruby>画像<rt>がぞう</rt></ruby>を<ruby>保存<rt>ほぞん</rt></ruby>」を えらんでね</p>':''}`);
+    // 共有シートは ボタンを おした そのばで よぶ（iPad / iPhone は「画像を保存」で 写真アプリへ）
+    const pb=$('photoSaveBtn');
+    if(pb) pb.onclick=async()=>{
+      try{
+        await navigator.share({files:[file],title:'じここうしん カード'});
+        toast('ほぞん できたよ📷');
+      }catch(err){
+        if(err && err.name==='AbortError') return;
+        console.error(err);
+        toast('ほぞんが できなかったよ。もういちど おしてね',4500);
+      }
+    };
   }catch(err){
     console.error(err);
     openModal('<div class="modal-msg">ごめんね、がぞうが つくれなかったよ。<br>もういちど ためしてね。</div><button class="btn primary" data-close>とじる</button>');
