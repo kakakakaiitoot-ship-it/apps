@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fff8ec">
+<title>おはなし ぶんしょう</title>
+<style>
+  :root {
+    --bg: #fff8ec;
+    --card: #ffffff;
+    --ink: #3d3a4b;
+    --sub: #7a7690;
+    --line: #f0e2c8;
+    --mic: #ff8a65;
+    --mic-dark: #e8663f;
+    --rec: #e53935;
+    --tidy: #66bb6a;
+    --tidy-dark: #43a047;
+    --copy: #42a5f5;
+    --copy-dark: #1e88e5;
+    --clear: #b0a8c4;
+    --clear-dark: #8e85a6;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Kosugi Maru", "BIZ UDPGothic", sans-serif;
+    font-size: 22px;
+    line-height: 1.6;
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: max(16px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 100%;
+  }
+  h1 {
+    margin: 4px 0 0;
+    font-size: 32px;
+    text-align: center;
+    letter-spacing: .05em;
+  }
+  h1 .emoji { font-size: 36px; }
+  rt { font-size: .5em; color: var(--sub); }
+  .back { align-self: flex-start; font-size: 18px; font-weight: bold; color: var(--sub); text-decoration: none; border: 3px solid var(--line); background: var(--card); border-radius: 999px; padding: 4px 16px; }
+
+  /* 録音ボタン */
+  .mic {
+    width: 100%;
+    min-height: 120px;
+    border: none;
+    border-radius: 60px;
+    background: var(--mic);
+    color: #fff;
+    font: inherit;
+    font-size: 32px;
+    font-weight: bold;
+    box-shadow: 0 8px 0 var(--mic-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: transform .08s, box-shadow .08s, background .2s;
+  }
+  .mic:active { transform: translateY(6px); box-shadow: 0 2px 0 var(--mic-dark); }
+  .mic .icon { font-size: 48px; }
+  .mic.listening {
+    background: var(--rec);
+    box-shadow: 0 8px 0 #b71c1c;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.15); }
+  }
+  .mic:disabled { background: #ccc; box-shadow: 0 8px 0 #aaa; }
+
+  .status {
+    text-align: center;
+    min-height: 1.6em;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--sub);
+  }
+  .status.on { color: var(--rec); }
+  .status.warn { color: #c62828; }
+  .dots::after { content: ""; animation: dots 1.2s steps(4) infinite; }
+  @keyframes dots {
+    0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; }
+  }
+
+  /* テキストエリア */
+  .paper {
+    background: var(--card);
+    border: 4px solid var(--line);
+    border-radius: 28px;
+    padding: 8px;
+    flex: 1;
+    display: flex;
+  }
+  textarea {
+    width: 100%;
+    min-height: 300px;
+    border: none;
+    outline: none;
+    resize: none;
+    background:
+      repeating-linear-gradient(to bottom, transparent 0, transparent calc(1.8em - 2px), #f3ead8 calc(1.8em - 2px), #f3ead8 1.8em);
+    background-attachment: local;
+    color: var(--ink);
+    font: inherit;
+    font-size: 28px;
+    line-height: 1.8em;
+    padding: 0 12px;
+    border-radius: 20px;
+  }
+  textarea::placeholder { color: #bdb6cf; }
+  textarea[readonly] { cursor: default; }
+
+  /* 下のボタン */
+  .tools {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .tool {
+    min-height: 110px;
+    border: none;
+    border-radius: 32px;
+    color: #fff;
+    font: inherit;
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 1.3;
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: transform .08s, box-shadow .08s;
+  }
+  .tool .icon { font-size: 36px; }
+  .tool:active { transform: translateY(5px); }
+  .tool:disabled { opacity: .45; }
+  .tidy  { background: var(--tidy);  box-shadow: 0 6px 0 var(--tidy-dark); }
+  .copy  { background: var(--copy);  box-shadow: 0 6px 0 var(--copy-dark); }
+  .clear { background: var(--clear); box-shadow: 0 6px 0 var(--clear-dark); }
+  .tidy:active  { box-shadow: 0 1px 0 var(--tidy-dark); }
+  .copy:active  { box-shadow: 0 1px 0 var(--copy-dark); }
+  .clear:active { box-shadow: 0 1px 0 var(--clear-dark); }
+
+  .undo-row { text-align: center; min-height: 56px; }
+  .undo {
+    border: 3px solid var(--line);
+    background: var(--card);
+    color: var(--sub);
+    font: inherit;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 999px;
+    padding: 8px 24px;
+    cursor: pointer;
+  }
+  .undo[hidden] { display: none; }
+
+  /* メッセージ・かくにん */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(61, 58, 75, .45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+  .box {
+    background: var(--card);
+    border-radius: 36px;
+    padding: 36px 32px;
+    max-width: 560px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,.2);
+    transform: scale(.9);
+    transition: transform .2s;
+  }
+  .overlay.show .box { transform: scale(1); }
+  .box .big-icon { font-size: 72px; line-height: 1.2; }
+  .box .msg { font-size: 32px; font-weight: bold; margin: 8px 0; }
+  .box .sub { font-size: 24px; color: var(--sub); }
+  .box .btns { display: flex; gap: 16px; margin-top: 24px; }
+  .box .btns button {
+    flex: 1;
+    min-height: 80px;
+    border: none;
+    border-radius: 28px;
+    font: inherit;
+    font-size: 26px;
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+  }
+  .yes { background: var(--rec); box-shadow: 0 5px 0 #b71c1c; }
+  .no  { background: var(--copy); box-shadow: 0 5px 0 var(--copy-dark); }
+
+  @media (max-width: 600px) {
+    body { font-size: 18px; }
+    h1 { font-size: 26px; }
+    .mic { font-size: 26px; min-height: 96px; }
+    .tool { font-size: 18px; min-height: 96px; border-radius: 24px; }
+    .tool .icon { font-size: 30px; }
+    textarea { font-size: 24px; }
+    .box .msg { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">← 一覧</a>
+  <h1><span class="emoji">🎤</span> おはなし <ruby>文章<rt>ぶんしょう</rt></ruby></h1>
+
+  <button id="micBtn" class="mic" type="button" aria-pressed="false">
+    <span class="icon" aria-hidden="true">🎙️</span>
+    <span id="micLabel">おはなしして にゅうりょく</span>
+  </button>
+
+  <div id="status" class="status" role="status" aria-live="polite">ボタンを おして、おはなししてね</div>
+
+  <div class="paper">
+    <textarea id="text" placeholder="ここに ことばが でてくるよ" aria-label="ぶんしょう" autocapitalize="off" spellcheck="false"></textarea>
+  </div>
+
+  <div class="tools">
+    <button id="tidyBtn" class="tool tidy" type="button">
+      <span class="icon" aria-hidden="true">✨</span>
+      <span>ていさいを<br>ととのえる</span>
+    </button>
+    <button id="copyBtn" class="tool copy" type="button">
+      <span class="icon" aria-hidden="true">📋</span>
+      <span>ぜんぶ<br>コピー</span>
+    </button>
+    <button id="clearBtn" class="tool clear" type="button">
+      <span class="icon" aria-hidden="true">🧹</span>
+      <span>けす</span>
+    </button>
+  </div>
+
+  <div class="undo-row">
+    <button id="undoBtn" class="undo" type="button" hidden>↩️ もとに もどす</button>
+  </div>
+</div>
+
+<!-- メッセージ -->
+<div id="toast" class="overlay" aria-hidden="true">
+  <div class="box" role="alertdialog" aria-live="assertive">
+    <div id="toastIcon" class="big-icon">🎉</div>
+    <div id="toastMsg" class="msg"></div>
+    <div id="toastSub" class="sub"></div>
+  </div>
+</div>
+
+<!-- けす かくにん -->
+<div id="confirm" class="overlay" aria-hidden="true">
+  <div class="box" role="alertdialog">
+    <div class="big-icon">🧹</div>
+    <div class="msg">ほんとうに ぜんぶ けす？</div>
+    <div class="sub">けした あとでも「もとに もどす」で もどせるよ</div>
+    <div class="btns">
+      <button id="noBtn" class="no" type="button">やめる</button>
+      <button id="yesBtn" class="yes" type="button">けす</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+  const textEl = $("text");
+  const micBtn = $("micBtn");
+  const micLabel = $("micLabel");
+  const statusEl = $("status");
+  const undoBtn = $("undoBtn");
+
+  const DEFAULT_STATUS = "ボタンを おして、おはなししてね";
+
+  function setStatus(msg, mode) {
+    statusEl.className = "status" + (mode ? " " + mode : "");
+    statusEl.innerHTML = msg;
+  }
+
+  function scrollToEnd() {
+    textEl.scrollTop = textEl.scrollHeight;
+  }
+
+  /* ---------- もとにもどす（1回分） ---------- */
+  let undoText = null;
+  function saveUndo() {
+    undoText = textEl.value;
+    undoBtn.hidden = false;
+  }
+  function clearUndo() {
+    undoText = null;
+    undoBtn.hidden = true;
+  }
+  undoBtn.addEventListener("click", () => {
+    if (undoText === null) return;
+    textEl.value = undoText;
+    clearUndo();
+    setStatus("もとに もどしたよ");
+  });
+  textEl.addEventListener("input", clearUndo);
+
+  /* ---------- 音声認識 ---------- */
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec = null;
+  let wantListening = false;   // ユーザーが「きいて」と思っている状態
+  let running = false;         // 実際に認識エンジンが動いている状態
+  let baseText = "";           // 録音開始前（と確定ずみ）の文章
+  let sessionFinal = "";       // いまのセッションで確定した文字
+  let restartTimer = null;
+  let quickFailCount = 0;
+  let startedAt = 0;
+
+  function joinText(a, b) {
+    if (!a) return b;
+    if (!b) return a;
+    // 前の文章と新しい文章のあいだに区切りを入れる（整形で「、」になる）
+    if (/[\s。、！？!?]$/.test(a)) return a + b;
+    return a + " " + b;
+  }
+
+  function render(interim) {
+    textEl.value = joinText(baseText, sessionFinal + (interim || ""));
+    scrollToEnd();
+  }
+
+  function commitSession() {
+    if (sessionFinal) {
+      baseText = joinText(baseText, sessionFinal);
+      sessionFinal = "";
+    }
+    textEl.value = baseText;
+  }
+
+  function setupRecognition() {
+    rec = new SR();
+    rec.lang = "ja-JP";
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
+
+    rec.onstart = () => {
+      running = true;
+      startedAt = Date.now();
+    };
+
+    rec.onresult = (e) => {
+      // Safari は resultIndex が不安定なことがあるので、毎回ぜんぶ組み立て直す
+      let finalStr = "";
+      let interimStr = "";
+      for (let i = 0; i < e.results.length; i++) {
+        const r = e.results[i];
+        const t = r[0] ? r[0].transcript : "";
+        if (r.isFinal) finalStr += t;
+        else interimStr += t;
+      }
+      sessionFinal = finalStr;
+      render(interimStr);
+      quickFailCount = 0;
+    };
+
+    rec.onerror = (e) => {
+      switch (e.error) {
+        case "not-allowed":
+        case "service-not-allowed":
+          wantListening = false;
+          setStatus("マイクが つかえないよ。<br>おとなの人に「マイクを きょか」してもらってね", "warn");
+          break;
+        case "audio-capture":
+          wantListening = false;
+          setStatus("マイクが みつからないよ", "warn");
+          break;
+        case "network":
+          setStatus("インターネットに つながっているか みてね", "warn");
+          break;
+        case "no-speech":
+        case "aborted":
+          // しずかだった／とめた だけなので、そのまま
+          break;
+        default:
+          setStatus("うまく ききとれなかったよ。もういちど おしてね", "warn");
+      }
+    };
+
+    rec.onend = () => {
+      running = false;
+      commitSession();
+      if (wantListening) {
+        // iPad では しばらく しゃべらないと かってに止まるので、つづけて きく
+        if (Date.now() - startedAt < 1000) quickFailCount++;
+        if (quickFailCount >= 3) {
+          wantListening = false;
+          updateMicUI();
+          setStatus("うまく うごかないよ。もういちど おしてね", "warn");
+          return;
+        }
+        clearTimeout(restartTimer);
+        restartTimer = setTimeout(safeStart, 250);
+      } else {
+        updateMicUI();
+      }
+    };
+  }
+
+  function safeStart() {
+    if (!wantListening || running) return;
+    try {
+      rec.start();
+    } catch (err) {
+      // すでに動いている等。すこし待ってもう一度
+      clearTimeout(restartTimer);
+      restartTimer = setTimeout(() => {
+        try { if (wantListening && !running) rec.start(); } catch (_) {}
+      }, 400);
+    }
+  }
+
+  function updateMicUI() {
+    micBtn.classList.toggle("listening", wantListening);
+    micBtn.setAttribute("aria-pressed", String(wantListening));
+    micLabel.textContent = wantListening ? "とめる" : "おはなしして にゅうりょく";
+    textEl.readOnly = wantListening;
+    if (wantListening) {
+      setStatus('ききとり中<span class="dots"></span>', "on");
+    } else if (statusEl.classList.contains("on")) {
+      setStatus(DEFAULT_STATUS);
+    }
+  }
+
+  function startListening() {
+    baseText = textEl.value;
+    sessionFinal = "";
+    quickFailCount = 0;
+    clearUndo();
+    wantListening = true;
+    updateMicUI();
+    safeStart(); // ボタンをおした その場で start（iPad の きまり）
+  }
+
+  function stopListening() {
+    wantListening = false;
+    clearTimeout(restartTimer);
+    updateMicUI();
+    if (running) {
+      try { rec.stop(); } catch (_) {}
+    } else {
+      commitSession();
+    }
+  }
+
+  // ホーム画面のアイコンから「Webアプリ」として開くと、iPad では音声入力が動かないことがある
+  const isStandalone = navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+
+  if (SR) {
+    setupRecognition();
+    if (isStandalone) {
+      setStatus("うまく きこえないときは、Safari で ひらいてね", "warn");
+    }
+    micBtn.addEventListener("click", () => {
+      wantListening ? stopListening() : startListening();
+    });
+    // ほかのアプリに切りかえたら とめる
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && wantListening) stopListening();
+    });
+  } else {
+    micBtn.disabled = true;
+    micLabel.textContent = "このブラウザでは つかえません";
+    setStatus("Safari で ひらいてね。<br>または キーボードの 🎤 マークを つかってね", "warn");
+  }
+
+  /* ---------- ていさいを ととのえる ---------- */
+  const FILLERS = new RegExp(
+    "(" + [
+      "え[ーぇ〜]*っと", "ええと", "え[ーぇ〜]+と", "え[ーぇ〜]{1,}(?=[、,\\s]|$)",
+      "エ[ーェ〜]*ット", "エ[ーェ〜]+ト",
+      "あの[ーぉう〜]+", "あの(?=[、,\\s])", "アノ[ーォウ〜]+",
+      "う[ー〜]+ん", "うん[ー〜]+", "ん[ー〜]+",
+      "その[ーぉ〜]+", "まあ[ー〜]*(?=[、,\\s])", "なんか[ー〜]+"
+    ].join("|") + ")[、,\\s　]*",
+    "g"
+  );
+
+  const SENTENCE_END =
+    /(ですよね|ますよね|でしたね|でしたよ|ましたね|ましたよ|ですね|ますね|ですよ|ますよ|だよね|だよ|だね|たよ|たね|よね|ませんでした|でした|ました|ません|でしょう|ましょう|ください|です|ます)(?![。、！？!?」』）)かがけのしとねよなわ])/g;
+  const QUESTION_END =
+    /(ですか|ますか|でしょうか|ましたか|でしたか|ませんか)(?![。、！？!?」』）)ねな])/g;
+  const CONNECTORS =
+    /(^|[。！？])(そして|それから|それで|でも|だから|だけど|けれども|しかし|すると|つぎに|次に|さいごに|最後に|はじめに|まず|あと)(?![、。！？])/g;
+  const MID_COMMA = /(ので|けれど|けど)(?![、。！？」』）)\s])/g;
+
+  function tidyLine(line) {
+    let t = line;
+    t = t.replace(/[,，]/g, "、").replace(/[．]/g, "。");
+    t = t.replace(FILLERS, "");
+    // 文のおわり（空白の前でも みつける）
+    t = t.replace(QUESTION_END, "$1？");
+    t = t.replace(SENTENCE_END, "$1。");
+    // 「は」「て」「ので」などの あとの空白 → 「、」（音声入力の ひと休み）
+    t = t.replace(/(は|て|ても|たら|なら|ので|から|けど|けれど|し)[ 　\t]+(?=[^\x00-\x7F])/g, "$1、");
+    // のこりの空白：英数字どうしは1つに、それ以外は けす
+    t = t.replace(/([A-Za-z0-9])[ 　\t]+(?=[A-Za-z0-9])/g, "$1\u0000");
+    t = t.replace(/[ 　\t]+/g, "").replace(/\u0000/g, " ");
+    // つなぎの ことば
+    t = t.replace(CONNECTORS, "$1$2、");
+    t = t.replace(MID_COMMA, "$1、");
+    // くとうてんの おそうじ
+    t = t.replace(/、{2,}/g, "、");
+    t = t.replace(/、+([。！？!?])/g, "$1");
+    t = t.replace(/([。！？!?])、+/g, "$1");
+    t = t.replace(/。{2,}/g, "。");
+    t = t.replace(/^[、。]+/, "");
+    t = t.replace(/、+$/, "");
+    if (t && !/[。！？!?」』）)]$/.test(t)) t += "。";
+    return t;
+  }
+
+  function tidy(text) {
+    return text
+      .replace(/\r\n?/g, "\n")
+      .split("\n")
+      .map((l) => tidyLine(l.trim()))
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  }
+
+  $("tidyBtn").addEventListener("click", () => {
+    if (wantListening) stopListening();
+    const before = textEl.value;
+    if (!before.trim()) {
+      showToast("🙂", "まだ ことばが ないよ", "さきに おはなし してみてね");
+      return;
+    }
+    const after = tidy(before);
+    if (after === before) {
+      setStatus("もう きれいだよ！");
+      return;
+    }
+    saveUndo();
+    textEl.value = after;
+    setStatus("✨ きれいに したよ！");
+  });
+
+  /* ---------- コピー ---------- */
+  async function copyText(str) {
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(str);
+        return true;
+      } catch (_) { /* 下の方法を ためす */ }
+    }
+    // 古い方法（iPad でも うごく）
+    const ta = document.createElement("textarea");
+    ta.value = str;
+    ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:fixed;top:0;left:0;opacity:0;font-size:16px;";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.setSelectionRange(0, str.length);
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch (_) {}
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  $("copyBtn").addEventListener("click", async () => {
+    if (wantListening) stopListening();
+    const str = textEl.value;
+    if (!str.trim()) {
+      showToast("🙂", "まだ ことばが ないよ", "さきに おはなし してみてね");
+      return;
+    }
+    const ok = await copyText(str);
+    if (ok) {
+      showToast("🎉", "コピーできたよ！", "ほかの アプリに はりつけてね");
+    } else {
+      textEl.focus();
+      textEl.select();
+      showToast("🙇", "コピーできなかったよ", "もじを ながおしして「コピー」してね");
+    }
+  });
+
+  /* ---------- メッセージ ---------- */
+  const toast = $("toast");
+  let toastTimer = null;
+  function showToast(icon, msg, sub) {
+    $("toastIcon").textContent = icon;
+    $("toastMsg").textContent = msg;
+    $("toastSub").textContent = sub || "";
+    toast.classList.add("show");
+    toast.setAttribute("aria-hidden", "false");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, 2800);
+  }
+  function hideToast() {
+    toast.classList.remove("show");
+    toast.setAttribute("aria-hidden", "true");
+  }
+  toast.addEventListener("click", hideToast);
+
+  /* ---------- けす ---------- */
+  const confirmEl = $("confirm");
+  function openConfirm() {
+    confirmEl.classList.add("show");
+    confirmEl.setAttribute("aria-hidden", "false");
+  }
+  function closeConfirm() {
+    confirmEl.classList.remove("show");
+    confirmEl.setAttribute("aria-hidden", "true");
+  }
+  $("clearBtn").addEventListener("click", () => {
+    if (wantListening) stopListening();
+    if (!textEl.value) return;
+    openConfirm();
+  });
+  $("noBtn").addEventListener("click", closeConfirm);
+  $("yesBtn").addEventListener("click", () => {
+    saveUndo();
+    textEl.value = "";
+    baseText = "";
+    sessionFinal = "";
+    closeConfirm();
+    setStatus("けしたよ");
+  });
+  confirmEl.addEventListener("click", (e) => {
+    if (e.target === confirmEl) closeConfirm();
+  });
+})();
+</script>
+</body>
+</html>
