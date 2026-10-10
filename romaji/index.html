@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ローマ字プリントメーカー</title>
+<style>
+:root{
+  --navy:#10243F;
+  --blue:#1F6FD0;
+  --blue-d:#164E93;
+  --pale:#E8F0FA;
+  --rule:#5D87B5;   /* 4線の補助線・マスの枠：印刷でかすれない濃さ */
+  --base:#1B3F6B;   /* 4線のベースライン（3本目） */
+  --faint:#A8BFD6;  /* うすじ（なぞり書き用） */
+  --paper:#fff;
+  /* 手書き・教科書と同じ1階建ての a / g になるフォント */
+  --roma-font:Andika,"Century Gothic","Comic Sans MS",Verdana,sans-serif;
+}
+/* Andika（SIL・OFL）。小学校のローマ字指導に合わせて、小文字の a は
+   1階建て（ɑ）、g も1階建てになる。必要な文字だけに絞ってファイルに
+   埋め込んであるので、オフラインでも file:// でもこの字形で出る */
+@font-face{font-family:Andika;font-style:normal;font-weight:400;font-display:swap;
+  src:url(data:font/woff;base64,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) format("woff")}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--pale);color:var(--navy);
+  font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+  height:100vh;display:flex;flex-direction:column;overflow:hidden;
+}
+header{background:var(--navy);color:#fff;padding:12px 16px;flex:0 0 auto}
+header h1{margin:0;font-size:17px;letter-spacing:.04em}
+header p{margin:4px 0 0;font-size:12px;color:#A9C4E6}
+header .back{float:right;font-size:13px;font-weight:700;color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.6);border-radius:8px;padding:2px 8px}
+@media print{header .back{display:none}}
+/* ===== 左右2分割レイアウト ===== */
+.app-container{display:flex;flex:1 1 auto;min-height:0;overflow:hidden}
+.panel{flex:0 0 380px;width:380px;padding:16px;overflow-y:auto;
+  background:rgba(255,255,255,.4);border-right:1px solid rgba(27,63,107,.15)}
+.preview-pane{flex:1 1 auto;min-width:0;overflow:auto;padding:16px;
+  display:flex;justify-content:center;align-items:flex-start;background:var(--pale)}
+.row{margin-bottom:14px}
+.row > span.lbl{display:block;font-size:12px;color:var(--blue-d);margin-bottom:6px;font-weight:700}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+button.chip{
+  border:1.5px solid var(--rule);background:var(--paper);color:var(--navy);
+  border-radius:8px;padding:7px 11px;font-size:14px;cursor:pointer;
+  font-family:inherit;min-width:40px;
+}
+button.chip.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}
+button.chip:focus-visible{outline:3px solid #F2B705;outline-offset:2px}
+.go{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+button.main{
+  flex:1 1 140px;border:none;border-radius:10px;padding:12px;font-size:15px;
+  font-weight:700;background:var(--blue);color:#fff;cursor:pointer;font-family:inherit;
+}
+button.sub{flex:1 1 90px;background:var(--paper);color:var(--blue-d);border:1.5px solid var(--blue);}
+.note{font-size:12px;color:#B4551E;margin-top:10px;min-height:1em}
+
+/* ===== 紙面 ===== */
+#stage{margin:0 auto;max-width:100%;overflow:visible}
+/* 高さを用紙1枚ぶんに固定し、縦の flex で「ヘッダー＋問題エリア＋脚注」に分ける。
+   問題エリアが残り全部を取るので、行の高さを px で見積もる必要がなくなる＝はみ出せない */
+#paper{position:relative;background:var(--paper);padding:6mm 8mm;width:210mm;height:297mm;
+  display:flex;flex-direction:column;overflow:hidden;
+  transform-origin:top left;box-shadow:0 4px 16px rgba(16,36,63,.18);
+  font-size:14px;   /* 紙面の基準。ヘッダー類はこれに対する em で書く */
+  --gap:3px; --noz:22px; --kanaF:17px; --romaF:19px; --cellz:34px;
+  --nmW:115mm; --nmH:9mm; --nmFl:13mm}
+.ph{flex:0 0 auto;display:flex;align-items:flex-end;gap:10px;border-bottom:2px solid var(--navy);
+  padding-bottom:10px;margin-bottom:5px;break-inside:avoid}
+/* 見出しと範囲は左に縦積み。範囲は折り返さず、はみ出す分は … で省略する。
+   こうしないと画面幅で折り返して見出しの高さが変わり、印刷でページが割れる */
+.ph .ttl{flex:1 1 auto;min-width:0}
+.ph h2{margin:0;font-size:1.15em;white-space:nowrap}
+.ph .scope{font-size:.79em;color:var(--blue-d);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph .nm{flex:0 0 min(var(--nmW), calc(100% - 60mm))}   /* 見出し側に最低60mm残す */
+.ph .nm .fl{height:var(--nmFl)}
+.nmrow{display:flex;align-items:center;gap:5px}
+.nmrow+.nmrow{margin-top:10px}
+.nmrow .cap{flex:0 0 4.2em;font-size:.79em;color:var(--blue-d);white-space:nowrap}
+.nmjp{flex:1 1 auto;height:var(--nmH);border-bottom:1.5px solid var(--navy)}
+.ph .nm{padding-bottom:2px}
+.ph .nm .cap{font-size:.79em;color:var(--blue-d)}
+.meta{display:flex;gap:.6em;font-size:.79em;margin-bottom:4px;flex:0 0 auto;break-inside:avoid}
+.meta div{border:1px solid var(--rule);border-radius:4px;padding:2px .7em}
+
+/* 行は repeat(n,1fr) の均等割り付け（JSが行数だけ指定する）。
+   親の高さが決まっているので、何問でも縦にはみ出さない */
+.grid{flex:1 1 auto;min-height:0;overflow:hidden;display:grid;gap:var(--gap) .7em}
+.grid.c2{grid-template-columns:1fr 1fr}
+.grid.c3{grid-template-columns:repeat(3,1fr)}
+.grid.c1{grid-template-columns:1fr}
+/* 1問＝1段。段の高さいっぱいを使う */
+.q{display:flex;align-items:center;gap:.45em;padding-right:.3em;height:100%;min-height:0;min-width:0;
+  overflow:hidden;break-inside:avoid;page-break-inside:avoid}
+.no{flex:0 0 var(--noz);height:var(--noz);border-radius:50%;border:1.5px solid var(--navy);
+  display:flex;align-items:center;justify-content:center;font-size:calc(var(--noz)*.5);font-weight:700}
+.kana{font-size:var(--kanaF);flex:0 0 auto;min-width:calc(var(--kanaN,5.6)*1em);white-space:nowrap}
+.roma{font-family:var(--roma-font);font-size:var(--romaF);flex:0 0 auto;
+  min-width:calc(var(--romaN,9)*.62em);
+  letter-spacing:.04em;white-space:nowrap}
+.cells{display:flex;gap:.2em;flex:0 0 auto}
+.cell{width:var(--cellz);height:var(--cellz);border:1.2px solid var(--rule);border-radius:2px}
+
+/* 4線：高さは --flh で固定、横だけ伸びる。折り返しは起こらない。
+   線は「枠線」で描く。背景（linear-gradient）で描くと、Chromeの印刷設定
+   「背景のグラフィック」がオフのとき4線だけ印刷されない */
+.fl{position:relative;flex:1 1 auto;min-width:0;height:86%;overflow:hidden}
+.fl > i{position:absolute;left:0;right:0;height:0;border-top:1.2px solid var(--rule)}
+.fl > i.b{top:25%}
+.fl > i.c{top:75%;margin-top:-2px;border-top-width:2px;border-top-color:var(--base)}
+.fl > i.d{top:auto;bottom:0;border-top:0;border-bottom:1px solid var(--rule)}
+.fl > svg{position:absolute;left:0;top:0;height:100%;width:auto;display:block}
+/* SVG の presentation attribute は var() を解釈しないので、CSS 側で指定する */
+.fl > svg text{font-family:var(--roma-font)}
+.ans{font-family:var(--roma-font);color:var(--base);font-size:17px}
+.alt{font-family:var(--roma-font);font-size:calc(var(--kanaF)*.56);color:#6B87A8;flex:0 1 auto;min-width:0;
+  white-space:nowrap;overflow:hidden}
+.q > .fl{flex:1 1 auto}
+.rule{margin-top:5px;padding:4px 8px;flex:0 0 auto;border:1px solid var(--rule);border-radius:4px;break-inside:avoid;
+  font-size:.79em;color:var(--blue-d);background:var(--pale)}
+.foot{margin-top:4px;font-size:.71em;color:#5E7A99;text-align:right;flex:0 0 auto;break-inside:avoid}
+
+/* 画面幅が狭い端末は縦並びに戻す */
+@media (max-width:860px){
+  body{height:auto;overflow:visible}
+  .app-container{flex-direction:column}
+  .panel{flex:0 0 auto;width:100%;border-right:none;border-bottom:1px solid rgba(27,63,107,.15)}
+}
+
+@media print{
+  body{background:#fff;height:100%;overflow:visible;display:block}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  header,.panel{display:none!important}
+  .app-container{display:block;height:100%;overflow:visible}
+  .preview-pane{display:block;height:100%;padding:0;overflow:visible;background:transparent}
+  /* applyPaper() が width/min-height をインラインで書くので、印刷では !important で打ち消す。
+     これを外すと用紙が210mm＋余白24mmになり、必ず2ページに割れる */
+  /* 画面用の縮小表示（インラインの width/height）を印刷では必ず打ち消す。
+     残っていると、その箱の大きさのせいだけでページが割れる */
+  #stage{margin:0;overflow:hidden;width:auto!important;height:100%!important;max-width:none}
+  /* 高さを mm で固定すると、印刷ダイアログの「倍率」を上げられたときに必ず割れる。
+     倍率は CSS からは読めないので、mm ではなく「ページの高さの100%」で指定する。
+     こうすると倍率が何%でも、紙面はつねに1ページぶんちょうどになる */
+  html,body{height:100%}
+  /* 印刷ダイアログの「倍率」は CSS から読めない。px や mm のままだと倍率ぶん
+     だけ大きく出てはみ出すので、印刷時だけ vh / vw 指定に切り替える */
+  /* JS がインラインで px を書いているので、!important でないと上書きできない */
+  #paper{font-size:var(--baseP)!important;
+    --gap:var(--gapP)!important; --noz:var(--nozP)!important;
+    --kanaF:var(--kanaFP)!important; --romaF:var(--romaFP)!important;
+    --cellz:var(--cellzP)!important; --nmW:var(--nmWP)!important;
+    --nmH:var(--nmHP)!important; --nmFl:var(--nmFlP)!important}
+  #paper{box-shadow:none;margin:0;padding:0;width:auto!important;
+         height:100%!important;max-height:100%!important;overflow:hidden;
+         transform:none!important;break-inside:avoid;page-break-inside:avoid}
+  /* 1問の途中で改ページしない */
+  .q,.ph,.meta,.rule,.foot,.cell,.fl{break-inside:avoid;page-break-inside:avoid}
+}
+</style>
+<style id="pagecss">@page{size:A4 portrait;margin:6mm 8mm}</style>
+</head>
+<body>
+
+<header>
+  <a class="back" href="../">← 一覧</a>
+  <h1>ローマ字プリントメーカー</h1>
+  <p>行をえらんで、よみ・かきのプリントをつくります</p>
+</header>
+
+<div class="app-container">
+<div class="panel">
+  <div class="row">
+    <span class="lbl">出す行（タップでえらぶ）</span>
+    <div class="btns" id="rows"></div>
+  </div>
+
+  <div class="row">
+    <span class="lbl">足す音</span>
+    <div class="btns" id="extras"></div>
+  </div>
+
+  <div class="row">
+    <span class="lbl">問題の種類</span>
+    <div class="btns" id="kinds"></div>
+  </div>
+
+  <div class="row">
+    <span class="lbl">用紙</span>
+    <div class="btns" id="papers"></div>
+  </div>
+
+  <div class="row">
+    <span class="lbl">問題数</span>
+    <div class="btns" id="counts"></div>
+  </div>
+
+  <div class="row">
+    <span class="lbl">お助けレベル（かきの問題に使う）</span>
+    <div class="btns" id="levels"></div>
+  </div>
+
+  <div class="go">
+    <button class="main" id="again">別の問題にする</button>
+    <button class="main sub" id="print">印刷する</button>
+  </div>
+  <div class="note" id="note"></div>
+</div>
+
+  <div class="preview-pane" id="previewPane">
+    <div id="stage"><div id="paper"></div></div>
+  </div>
+</div>
+
+<script>
+/* ============ かな → ローマ字 変換（APIなし） ============ */
+/* [訓令式, ヘボン式] */
+const T = {
+ 'あ':['a','a'],'い':['i','i'],'う':['u','u'],'え':['e','e'],'お':['o','o'],
+ 'か':['ka','ka'],'き':['ki','ki'],'く':['ku','ku'],'け':['ke','ke'],'こ':['ko','ko'],
+ 'さ':['sa','sa'],'し':['si','shi'],'す':['su','su'],'せ':['se','se'],'そ':['so','so'],
+ 'た':['ta','ta'],'ち':['ti','chi'],'つ':['tu','tsu'],'て':['te','te'],'と':['to','to'],
+ 'な':['na','na'],'に':['ni','ni'],'ぬ':['nu','nu'],'ね':['ne','ne'],'の':['no','no'],
+ 'は':['ha','ha'],'ひ':['hi','hi'],'ふ':['hu','fu'],'へ':['he','he'],'ほ':['ho','ho'],
+ 'ま':['ma','ma'],'み':['mi','mi'],'む':['mu','mu'],'め':['me','me'],'も':['mo','mo'],
+ 'や':['ya','ya'],'ゆ':['yu','yu'],'よ':['yo','yo'],
+ 'ら':['ra','ra'],'り':['ri','ri'],'る':['ru','ru'],'れ':['re','re'],'ろ':['ro','ro'],
+ 'わ':['wa','wa'],'を':['wo','o'],
+ 'が':['ga','ga'],'ぎ':['gi','gi'],'ぐ':['gu','gu'],'げ':['ge','ge'],'ご':['go','go'],
+ 'ざ':['za','za'],'じ':['zi','ji'],'ず':['zu','zu'],'ぜ':['ze','ze'],'ぞ':['zo','zo'],
+ 'だ':['da','da'],'ぢ':['di','ji'],'づ':['du','zu'],'で':['de','de'],'ど':['do','do'],
+ 'ば':['ba','ba'],'び':['bi','bi'],'ぶ':['bu','bu'],'べ':['be','be'],'ぼ':['bo','bo'],
+ 'ぱ':['pa','pa'],'ぴ':['pi','pi'],'ぷ':['pu','pu'],'ぺ':['pe','pe'],'ぽ':['po','po'],
+ 'きゃ':['kya','kya'],'きゅ':['kyu','kyu'],'きょ':['kyo','kyo'],
+ 'しゃ':['sya','sha'],'しゅ':['syu','shu'],'しょ':['syo','sho'],
+ 'ちゃ':['tya','cha'],'ちゅ':['tyu','chu'],'ちょ':['tyo','cho'],
+ 'にゃ':['nya','nya'],'にゅ':['nyu','nyu'],'にょ':['nyo','nyo'],
+ 'ひゃ':['hya','hya'],'ひゅ':['hyu','hyu'],'ひょ':['hyo','hyo'],
+ 'みゃ':['mya','mya'],'みゅ':['myu','myu'],'みょ':['myo','myo'],
+ 'りゃ':['rya','rya'],'りゅ':['ryu','ryu'],'りょ':['ryo','ryo'],
+ 'ぎゃ':['gya','gya'],'ぎゅ':['gyu','gyu'],'ぎょ':['gyo','gyo'],
+ 'じゃ':['zya','ja'],'じゅ':['zyu','ju'],'じょ':['zyo','jo'],
+ 'びゃ':['bya','bya'],'びゅ':['byu','byu'],'びょ':['byo','byo'],
+ 'ぴゃ':['pya','pya'],'ぴゅ':['pyu','pyu'],'ぴょ':['pyo','pyo']
+};
+const LONG = {k:{a:'â',i:'î',u:'û',e:'ê',o:'ô'}, h:{a:'ā',i:'ī',u:'ū',e:'ē',o:'ō'}};
+const VOW = {'あ':'a','い':'i','う':'u','え':'e','お':'o'};
+
+function tokenize(kana){
+  const out=[];
+  for(let i=0;i<kana.length;i++){
+    const two=kana.substr(i,2);
+    if(T[two]){out.push(two);i++;}
+    else out.push(kana[i]);
+  }
+  return out;
+}
+function toRomaji(kana, hepburn){
+  const idx = hepburn?1:0, lg = hepburn?LONG.h:LONG.k;
+  const u = tokenize(kana);
+  let out='', sokuon=false;
+  for(let i=0;i<u.length;i++){
+    const c=u[i];
+    if(c==='っ'){sokuon=true;continue;}
+    /* 長音：前のモーラの母音と同じ母音字が続くとき */
+    if(VOW[c] && out){
+      const last=out.slice(-1), v=VOW[c];
+      if(last===v || (v==='u' && last==='o')){
+        out = out.slice(0,-1) + lg[last==='o'?'o':last];
+        continue;
+      }
+    }
+    let r;
+    if(c==='ん'){
+      const nx = u[i+1];
+      let head='';
+      if(nx && nx!=='っ' && T[nx]) head = T[nx][idx][0];
+      r = (hepburn && head && 'bmp'.includes(head)) ? 'm' : 'n';
+      if(head && ('aiueoy'.includes(head))) r += "'";
+    }else{
+      if(!T[c]) continue;
+      r = T[c][idx];
+    }
+    if(sokuon){ r = (r.startsWith('ch') ? 't' : r[0]) + r; sokuon=false; }
+    out += r;
+  }
+  return out;
+}
+
+/* ============ 語いリスト（かなだけ／内蔵） ============ */
+const WORDS = [
+ 'あい','あう','あお','あおい','いえ','うえ','うお','おい','おおい','いいえ',
+ 'あか','あかい','あき','あく','いか','いく','いけ','えき','おか','おく',
+ 'かい','かお','かき','かく','きく','くき','けいこ','こい','こえ','こけ',
+ 'かいこ','きかい','きおく','かこ','こおり','くうき','いこう','おおきい','あさ','あさい',
+ 'あし','あす','あせ','いし','いす','いそ','うし','うす','うすい','うそ',
+ 'えさ','おす','しお','すし','しあい','すあし','さす','さい','うしお','さそい',
+ 'あいす','すいえい','さしえ','すいか','せき','そこ','さけ','あと','いと','うた',
+ 'おと','たい','たつ','たて','ちち','ちえ','つち','つた','つつ','てあて',
+ 'てつ','あいて','あつい','いたい','いたち','おとうと','ついたち','たこ','たけ','つき',
+ 'した','そと','くつ','かた','とし','あな','あね','いぬ','いね','うに',
+ 'おに','おの','なえ','なに','ぬう','にあう','ぬの','なし','にく','ねこ',
+ 'かに','さかな','なつ','なす','にし','はい','はえ','はは','ひえ','ひふ',
+ 'ふえ','へい','ほお','ほほ','ふうふ','ほのお','ひかり','はな','ひと','ふね',
+ 'へや','ほし','はこ','ふく','あひる','はし','はた','あま','いま','うま',
+ 'うめ','おまえ','まい','まえ','まま','もも','みまい','みみ','うみ','あみ',
+ 'おうむ','あおな','まち','みせ','むし','もち','あめ','くま','かみ','まめ',
+ 'いも','おや','いや','よい','あゆ','やおや','ゆうやけ','やま','ゆき','よる',
+ 'はやし','おやつ','やさい','ゆめ','よこ','つゆ','うら','おり','いろ','るす',
+ 'れい','あり','あらい','ろうか','りか','れきし','らく','りす','くるま','そら',
+ 'とり','はしら','さくら','くり','はれ','いわ','わけ','わに','かわ','にわ',
+ 'わたし','わら','かわら','ほん','みかん','てんき','さんかく','せんせい','にんき','けん',
+ 'ふんすい','げた','ごま','ざる','じかん','ずかん','かぜ','みず','ひざ','たまご',
+ 'かぎ','ばす','ぶた','どうぐ','でんわ','だいこん','ぎんこう','ぼうし','べんとう','ぱん',
+ 'ぴあの','ぺん','ぽけっと','ぷりん','きゃく','きゅうり','きょう','しゃしん','しゅくだい','しょくじ',
+ 'ちゃわん','ちゅうしゃ','ちょきん','にゅうがく','ひゃく','びょういん','りょうり','じゃがいも','きんぎょ','おちゃ',
+ 'きって','らっぱ','がっき','いっぱい','しっぽ','にっき','まっち','こっぷ','ざっし','きっぷ',
+ 'がっこう','おとうさん','おかあさん','おにいさん','そうじ','ゆうき','とうふ','ふうせん','ゆうびん','あいさつ',
+ 'あかり','あさひ','あしおと','いちご','いのち','うちゅう','うんどう','えいご','えほん','おうさま',
+ 'おかし','おてら','おんがく','かいだん','かがみ','かたち','きせつ','きのこ','きぼう','きょうしつ',
+ 'くすり','くだもの','けいさん','げんき','こうえん','こくご','ことば','こども','さいふ','さかみち',
+ 'さくぶん','さんすう','しあわせ','しずか','しつもん','じてんしゃ','しんぶん','すいどう','すうじ','せいかつ',
+ 'せんたく','そうだん','たいいく','たいよう','たからもの','たてもの','ちいさい','ちかてつ','ちきゅう','つくえ',
+ 'つめたい','てがみ','でんしゃ','とけい','ともだち','どうぶつ','なつやすみ','なまえ','にちようび','にほん',
+ 'にもつ','ねんど','のりもの','はくしゅ','はたけ','はなび','はやい','ひこうき','ふゆ','ぶんぼうぐ',
+ 'へいわ','べんきょう','ぼうけん','まいにち','まつり','まんが','みずうみ','みどり','むかし','めがね',
+ 'やきゅう','やさしい','ゆうがた','ようふく','よてい','らいねん','りょこう','れんしゅう','ろうそく','わたあめ',
+ 'わらう'
+];
+
+/* ============ 行の定義と許可文字 ============ */
+const ROWS = {
+ 'あ':'あいうえお','か':'かきくけこ','さ':'さしすせそ','た':'たちつてと',
+ 'な':'なにぬねの','は':'はひふへほ','ま':'まみむめも','や':'やゆよ',
+ 'ら':'らりるれろ','わ':'わを','ん':'ん'
+};
+const DAKU = {'か':'がぎぐげご','さ':'ざじずぜぞ','た':'だぢづでど','は':'ばびぶべぼぱぴぷぺぽ'};
+const YOU  = 'ゃゅょ';
+
+/* 用紙：[表示名, 幅mm, 高さmm, テスト時の列数, @page] */
+const PAPERS = {
+  a4t:['A4 たて',210,297,2,'A4 portrait'],
+  b4t:['B4 たて',257,364,2,'B4 portrait'],
+  a4y:['A4 よこ',297,210,3,'A4 landscape'],
+  a3y:['A3 よこ',420,297,3,'A3 landscape']
+};
+
+const state = {
+  rows:new Set(['あ','か','さ','た','な','は','ま','や','ら','わ','ん']),
+  daku:true, you:true, soku:true,
+  kind:'both', count:50, hepburn:false, /* 訓令式に固定（切替UIなし） */ level:'normal', paper:'a4t',
+  items:[]
+};
+function applyPaper(){
+  const p = PAPERS[state.paper], el = document.getElementById('paper');
+  el.style.width = p[1]+'mm';
+  el.style.height = p[2]+'mm';
+  el.style.setProperty('--pgh', p[2]+'mm');
+  document.getElementById('pagecss').textContent = `@page{size:${p[1]}mm ${p[2]}mm;margin:6mm 8mm}`;
+}
+/* 画面が狭いときは、紙面を「縮小表示」する（幅を詰めるのではなく）。
+   幅を詰めると画面と印刷で行の折り返しが変わり、印刷だけ2枚になる */
+function scaleView(){
+  const paper=document.getElementById('paper'), stage=document.getElementById('stage');
+  const preview=document.getElementById('previewPane');
+  if(!paper||!preview) return;
+  const availW=preview.clientWidth-32, availH=preview.clientHeight-32;
+  const rowLayout=window.innerWidth>860;
+  const k=rowLayout ? Math.min(1, availW/paper.offsetWidth, availH/paper.offsetHeight)
+                    : Math.min(1, availW/paper.offsetWidth);
+  paper.style.transform = k<1 ? `scale(${k})` : 'none';
+  stage.style.width  = Math.round(paper.offsetWidth*k)+'px';
+  stage.style.height = Math.round(paper.offsetHeight*k)+'px';
+}
+
+function allowedChars(){
+  let s='';
+  state.rows.forEach(r=>{ s+=ROWS[r]; if(state.daku && DAKU[r]) s+=DAKU[r]; });
+  if(state.you) s+=YOU;
+  if(state.soku) s+='っ';
+  return new Set(s.split(''));
+}
+function pool(){
+  const ok = allowedChars();
+  return WORDS.filter(w=>[...w].every(c=>ok.has(c)));
+}
+function pick(n){
+  const p = pool();
+  if(!p.length) return [];
+  const out=[];
+  while(out.length < n){                 /* 語が足りないときは、毎周シャッフルし直して補充する */
+    const s = p.slice();
+    for(let i=s.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[s[i],s[j]]=[s[j],s[i]];}
+    out.push(...s);
+  }
+  return out.slice(0,n);
+}
+
+/* ============ 4線 ============ */
+/* 線は .fl の背景（高さ固定・幅だけ可変）、文字だけSVG。
+   SVGは height:100% / width:auto なので、行の高さにだけ比例して拡大縮小する。 */
+function fourLine(text, mode){
+  if(!text) mode='blank';
+  const show = mode==='answer' ? text
+             : mode==='trace'  ? text
+             : mode==='first'  ? text[0] : '';
+  const fill = mode==='answer' ? 'var(--base)' : 'var(--faint)';
+  /* font-family は CSS（.fl > svg text）で当てる。属性に var() は書けない */
+  const t = show ? `<text x="10" y="36" font-size="42"`
+                 + ` letter-spacing="1" fill="${fill}">${show}</text>` : '';
+  const lines='<i class="a"></i><i class="b"></i><i class="c"></i><i class="d"></i>';
+  return `<div class="fl">${lines}${t?`<svg viewBox="0 0 300 48" preserveAspectRatio="xMinYMid meet">${t}</svg>`:''}</div>`;
+}
+
+/* 1mm が何pxか（用紙の高さから1ページに入る行の高さを逆算するのに使う） */
+const MM = (()=>{
+  const d=document.createElement('div');
+  d.style.cssText='position:absolute;visibility:hidden;width:100mm';
+  document.body.appendChild(d); const v=d.offsetWidth/100; d.remove(); return v;
+})();
+
+/* 語が長くて4線に収まらないときは、字を小さくして収める。
+   ベースライン（3本目の線）の位置は変えないので、線からは外れない。 */
+function squeeze(){
+  document.querySelectorAll('#paper .fl').forEach(fl=>{
+    const t=fl.querySelector('text'); if(!t) return;
+    t.setAttribute('font-size',42);
+    const h=fl.clientHeight; if(!h) return;
+    const avail=(fl.clientWidth/(h/48))-14;      /* viewBox単位に直した使える幅 */
+    const w=t.getComputedTextLength();
+    if(w>avail && avail>20) t.setAttribute('font-size', Math.max(16, 42*avail/w));
+  });
+}
+
+/* 行は grid の 1fr 均等割り付けなので、縦にはみ出すことは構造上ありえない。
+   ここでやるのは「決まった段の高さ」に合わせて字とマスの大きさを決めることだけ */
+function fit(){
+  const paper=document.getElementById('paper'), grid=paper.querySelector('.grid');
+  if(!grid) return true;
+  const cols=+grid.dataset.cols||1;
+  const lines=Math.ceil(state.count/cols);
+  const gap=3, CAP=150;                 /* 段が大きくなりすぎないための上限 */
+  grid.style.gridTemplateRows=`repeat(${lines},1fr)`;
+  grid.style.alignContent='stretch';
+  let track=(grid.clientHeight-gap*(lines-1))/lines;
+  if(track>CAP){                        /* 問題が少ないときは上限で止めて上詰め */
+    grid.style.gridTemplateRows=`repeat(${lines},${CAP}px)`;
+    grid.style.alignContent='start';
+    track=CAP;
+  }
+
+  const st=paper.style, cl=(v,lo,hi)=>Math.round(Math.max(lo,Math.min(v,hi)));
+  const maxn=+grid.dataset.maxn||4, maxr=+grid.dataset.maxr||9, maxk=+grid.dataset.maxk||5;
+  const colW=(grid.clientWidth-10*(cols-1))/cols;
+  const noz=cl(track*0.46,14,30);
+  /* 語が長いと、かな／ローマ字が列幅を食いつぶしてマスがはみ出す。
+     いちばん長い語が列幅の45%に収まるところまで字を小さくする */
+  const romaF=Math.max(10,Math.min(cl(track*0.46,12,38), Math.floor(0.45*colW/(0.62*maxr))));
+  const kanaF=Math.max(10,Math.min(cl(track*0.42,11,34), Math.floor(0.45*colW/maxk)));
+  st.setProperty('--gap', gap+'px');
+  st.setProperty('--noz',  noz+'px');
+  st.setProperty('--kanaN',maxk);
+  st.setProperty('--romaN',maxr);
+  st.setProperty('--kanaF',kanaF+'px');
+  st.setProperty('--romaF',romaF+'px');
+  const cellMax=(colW-noz-0.62*romaF*maxr-18-3*(maxn-1))/maxn;
+  let cellz=Math.max(12,Math.min(cl(track*0.80,22,48),Math.floor(cellMax)));
+  st.setProperty('--cellz',cellz+'px');
+  /* 見積りだけだとマスが列からはみ出すことがあるので、実測して詰める */
+  for(let n=0;n<14 && cellz>12;n++){
+    const over=[...grid.children].some(q=>q.scrollWidth>q.clientWidth+1);
+    if(!over) break;
+    cellz=Math.max(12,cellz-2);
+    st.setProperty('--cellz',cellz+'px');
+  }
+  /* 同じ寸法を「ページに対する割合」でも用意しておく（印刷時はこちらを使う）。
+     100vh = ページの内側の高さ、100vw = 同じく幅 */
+  const pad=getComputedStyle(paper);
+  const H=paper.clientHeight-parseFloat(pad.paddingTop)-parseFloat(pad.paddingBottom),
+        W=paper.clientWidth -parseFloat(pad.paddingLeft)-parseFloat(pad.paddingRight);
+  const vh=v=>(v/H*100).toFixed(3)+'vh', vw=v=>(v/W*100).toFixed(3)+'vw';
+  st.setProperty('--gapP',  vh(gap));
+  st.setProperty('--nozP',  vh(noz));
+  st.setProperty('--kanaFP',vh(kanaF));
+  st.setProperty('--romaFP',vh(romaF));
+  st.setProperty('--cellzP',vh(cellz*0.97));   /* 印刷は少しだけ余裕を持たせる */
+  st.setProperty('--baseP', vh(14));
+  const nmEl=paper.querySelector('.ph .nm');
+  st.setProperty('--nmWP',  vw(nmEl?nmEl.offsetWidth:80*MM));
+  st.setProperty('--nmHP',  vh(9*MM));
+  st.setProperty('--nmFlP', vh(13*MM));
+
+  const nt=document.getElementById('note');
+  const fl=track*0.86;
+  const warn = fl < 9*MM
+    ? `この問題数だと4線が約${(fl/MM).toFixed(1)}mmになります。問題数をへらすか、大きい用紙に（実際に刷る紙と同じものを選んでください）。` : '';
+  nt.textContent=[state._note,warn].filter(Boolean).join(' ');
+  squeeze();
+  scaleView();
+  return track>=30;      /* 段が低すぎるときは列を増やして組み直す */
+}
+function cells(n){ return `<div class="cells">${'<div class="cell"></div>'.repeat(n)}</div>`; }
+
+/* ============ 紙面を作る ============ */
+function scopeLabel(){
+  const r=[...state.rows].join('・')+'行';
+  const ex=[state.daku?'濁音':'',state.you?'拗音':'',state.soku?'っ':''].filter(Boolean).join('・');
+  return r+(ex?'／'+ex:'')+'　訓令式';
+}
+function build(reuse){
+  const n=state.count;
+  const p = pool();
+  const stale = !reuse || state.items.length!==n || !state.items.every(w=>p.indexOf(w)>=0);
+  if(stale) state.items = pick(n);
+  const words = state.items;
+  state._note =
+    !p.length ? 'この範囲でつくれる語がありません。行をふやしてください。'
+    : p.length < n ? `この範囲でつくれる語は${p.length}語です。同じ語がくり返し出ます。` : '';
+  document.getElementById('note').textContent = state._note;
+
+  const prac = n<=10;
+  /* 答えプリントはヘボン式も併記するので横幅が要る。たて用紙は1列、
+     よこ用紙は2列（3列だと1ページに入りきらない） */
+  const cols = prac ? 1
+    : state.level==='answer'
+      ? (n<=10 ? 1
+         : PAPERS[state.paper][3]>=3 ? 2
+         : n<=25 ? 1 : PAPERS[state.paper][3])
+    : PAPERS[state.paper][3];
+  const mode = state.level==='answer' ? 'answer'
+            : state.level==='trace' ? 'trace'
+            : state.level==='first' ? 'first' : 'blank';
+
+  let qs='';
+  words.forEach((w,i)=>{
+    const ro = toRomaji(w, state.hepburn);
+    const alt = toRomaji(w, !state.hepburn);
+    const kind = state.kind==='both' ? (i%2===0?'read':'write') : state.kind;
+    const no=`<div class="no">${i+1}</div>`;
+    if(kind==='read'){
+      const a = state.level==='answer' ? `<span class="kana" style="color:var(--base)">${w}</span>` : cells(tokenize(w).length);
+      qs += `<div class="q">${no}<span class="roma">${ro}</span>${a}</div>`;
+    }else{
+      const extra = (state.level==='answer' && alt!==ro) ? `<span class="alt">(${alt})</span>` : '';
+      qs += `<div class="q">${no}<span class="kana">${w}</span>${fourLine(ro, mode)}${extra}</div>`;
+    }
+  });
+
+  const render = (c) => { document.getElementById('paper').innerHTML = `
+   <div class="ph">
+     <div class="ttl">
+       <h2>ローマ字 ${prac?'れんしゅう':'テスト'}</h2>
+       <div class="scope">${scopeLabel()}</div>
+     </div>
+     <div class="nm">
+       <div class="nmrow"><span class="cap">なまえ</span><div class="nmjp"></div></div>
+       <div class="nmrow"><span class="cap">ローマ字</span>${fourLine('','blank')}</div>
+     </div>
+   </div>
+   <div class="meta"><div>くみ　　　</div><div>ばん　　　</div><div>月　　日</div></div>
+   <div class="grid c${c}" data-cols="${c}" data-maxn="${Math.max(2,...words.map(w=>tokenize(w).length))}" data-maxr="${Math.max(4,...words.map(w=>toRomaji(w,state.hepburn).length))}" data-maxk="${Math.max(3,...words.map(w=>w.length))}">${qs}</div>
+   ${state.level==='answer' ? '<div class="rule">※出題は訓令式。（　）内はヘボン式で、どちらで書いてあっても正解とします。</div>' : ''}
+   <div class="foot">訓令式／${PAPERS[state.paper][0]}／お助け：${({normal:'なし',first:'1文字目うすじ',trace:'ぜんぶうすじ',answer:'こたえ'})[state.level]}</div>`; };
+  /* 行をいちばん低くしても1ページに入らないときは、列を増やして組み直す */
+  for(let c=cols, maxc=Math.max(cols,PAPERS[state.paper][3]); c<=maxc; c++){
+    render(c);
+    if(fit() || c===maxc) break;
+  }
+}
+
+/* ============ UI ============ */
+function mk(host, list, isOn, onTap){
+  const el=document.getElementById(host); el.innerHTML='';
+  list.forEach(o=>{
+    const b=document.createElement('button');
+    b.className='chip'+(isOn(o.v)?' on':''); b.textContent=o.t;
+    b.onclick=()=>{onTap(o.v);draw();build(true);};
+    el.appendChild(b);
+  });
+}
+function draw(){
+  mk('rows',[...Object.keys(ROWS).map(r=>({t:r,v:r})),{t:'ぜんぶ',v:'*'}],
+     v=>v==='*'?state.rows.size===11:state.rows.has(v),
+     v=>{ if(v==='*'){ state.rows = state.rows.size===11 ? new Set(['あ']) : new Set(Object.keys(ROWS)); }
+          else { state.rows.has(v)?state.rows.delete(v):state.rows.add(v); if(!state.rows.size) state.rows.add(v); } });
+  mk('extras',[{t:'濁音・半濁音',v:'daku'},{t:'拗音（ゃゅょ）',v:'you'},{t:'小さい っ',v:'soku'}],
+     v=>state[v], v=>state[v]=!state[v]);
+  mk('kinds',[{t:'よみ',v:'read'},{t:'かき',v:'write'},{t:'りょうほう',v:'both'}],
+     v=>state.kind===v, v=>state.kind=v);
+  mk('papers',Object.keys(PAPERS).map(k=>({t:PAPERS[k][0],v:k})),
+     v=>state.paper===v, v=>{state.paper=v;applyPaper();});
+  mk('counts',[{t:'5もん',v:5},{t:'10もん',v:10},{t:'25もん',v:25},{t:'50もん',v:50}],
+     v=>state.count===v, v=>state.count=v);
+  mk('levels',[{t:'つうじょう',v:'normal'},{t:'1文字目うすじ',v:'first'},{t:'ぜんぶうすじ',v:'trace'},{t:'こたえ',v:'answer'}],
+     v=>state.level===v, v=>state.level=v);
+}
+document.getElementById('again').onclick=()=>build(false);
+document.getElementById('print').onclick=()=>window.print();
+window.addEventListener('resize', ()=>{scaleView();});
+applyPaper(); draw(); build(false);
+/* 書体が確定してから字幅が変わるので、一度だけ組み直す */
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>build(true));
+</script>
+</body>
+</html>
