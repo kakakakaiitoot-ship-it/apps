@@ -1,6 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>体育記録ラップ</title>
+<title>体育記録ラップ 時間走</title>
 <style>
 /* ===== トークン ===== */
 :root{
@@ -99,8 +99,9 @@ input{font-family:inherit}
 /* 時計 */
 .clockBox{padding:12px;background:var(--paper);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
 #clock{font-size:clamp(42px,14vw,68px);font-weight:700;line-height:1;text-align:center}
+#clockLabel{text-align:center;font-size:13px;font-weight:700;color:var(--ink-2);margin-bottom:2px}
 #clockHint{text-align:center;font-size:13px;color:var(--ink-2);margin-top:6px}
-.clockBox .row3{margin-top:12px}
+.clockBox .row3,.clockBox .row2{margin-top:12px}
 
 /* レーン */
 .lanes{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
@@ -112,7 +113,16 @@ input{font-family:inherit}
 .lane .who{font-size:19px;font-weight:700;line-height:1.15;text-align:center}
 .lane .tm{font-size:22px;font-weight:700;line-height:1}
 .lane .sub{font-size:12px;color:var(--ink-3)}
-.lane[data-s="got"]{border-color:var(--ink-2)}
+.lane[data-s="ready"]{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft),var(--shadow)}
+.lane[data-s="run"]{border-color:var(--ink-2);min-height:104px}
+.lane[data-s="run"] .tm{font-size:30px}
+.lane[data-s="run"]:active{background:var(--blue-soft)}
+.lanes.many{grid-template-columns:repeat(3,1fr);gap:6px}
+.lanes.many .lane{min-height:84px}
+.lanes.many .who{font-size:16px}
+.lanes.many .tm{font-size:18px}
+.lanes.many .lane[data-s="run"] .tm{font-size:24px}
+@media (min-width:560px){ .lanes.many{grid-template-columns:repeat(4,1fr)} }
 .lane[data-s="timed"]{background:var(--done-soft);border-color:var(--done)}
 .lane[data-s="timed"] .tm{color:var(--done)}
 .lane[data-s="orphan"]{border-color:var(--stop);border-style:dashed}
@@ -121,23 +131,13 @@ input{font-family:inherit}
 .lane[data-s="empty"]{border-style:dashed}
 .lane[data-s="empty"] .who{color:var(--blue);font-size:15px}
 
-/* スタート／ゴール兼用の大ボタン */
+/* スタート大ボタン */
 .go{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;
   min-height:128px;margin-top:10px;border-radius:18px;box-shadow:var(--shadow);transition:transform .05s ease}
 .go:active{transform:scale(.98)}
 .go .big{font-size:36px;font-weight:700;line-height:1}
 .go .sub{font-size:14px;font-weight:700;opacity:.85}
 .go[data-s="start"]{background:var(--blue);color:#fff}
-.go[data-s="goal"]{background:var(--ink);color:var(--paper)}
-
-/* 写真読み込み */
-.imRow{display:grid;grid-template-columns:26px 48px 48px auto 1fr;align-items:center;gap:8px;
-  padding:7px 2px;border-bottom:1px solid var(--line);font-size:15px}
-.imRow input{width:22px;height:22px;margin:0}
-.imT{font-weight:700;border:2px solid var(--line);border-radius:9px;padding:6px 10px;min-width:76px;text-align:right;font-size:16px}
-.flag{font-size:12px;font-weight:700;color:var(--stop);white-space:nowrap}
-.flag.ow{color:var(--ink-3)}
-.imMsg{background:var(--paper);border:2px solid var(--stop);color:var(--stop);border-radius:10px;padding:8px 10px;font-size:13px;font-weight:700;margin:0 0 8px}
 
 .raceHead{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
 .raceHead .n{font-weight:700;font-size:16px}
@@ -215,12 +215,12 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
   <!-- ===== 計測 ===== -->
   <section class="pane scroll" id="tab-measure">
     <div class="clockBox">
-      <div id="clock" class="num">0.00</div>
+      <div id="clockLabel">残り時間</div>
+      <div id="clock" class="num">5:00</div>
       <div id="clockHint"></div>
       <button class="go tap" id="btnGo" data-s="start"></button>
-      <div class="row3">
+      <div class="row2">
         <button class="btn stopc tap" id="btnStop" disabled>ストップ</button>
-        <button class="btn ghost tap" id="btnReset">リセット</button>
         <button class="btn ghost tap" id="btnUndo" disabled>1つ戻す</button>
       </div>
     </div>
@@ -258,11 +258,11 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
       </div>
       <div class="seg" id="sortSeg">
         <button class="tap" data-s="no" aria-pressed="true">クラス・番号順</button>
-        <button class="tap" data-s="time" aria-pressed="false">タイム順（速い順）</button>
+        <button class="tap" data-s="dist" aria-pressed="false">距離順（長い順）</button>
       </div>
       <div class="row3" style="margin-top:12px">
         <div class="card stat"><div class="k">記録ずみ</div><div class="v num" id="sumDone"></div></div>
-        <div class="card stat"><div class="k">最速</div><div class="v num" id="sumBest"></div></div>
+        <div class="card stat"><div class="k">最長</div><div class="v num" id="sumBest"></div></div>
         <div class="card stat"><div class="k">平均</div><div class="v num" id="sumAvg"></div></div>
       </div>
     </div>
@@ -271,18 +271,14 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
       <div class="card tableWrap">
         <table class="num" id="table"></table>
       </div>
-      <p class="hint" style="margin:8px 0 16px">行をタップするとタイムを直せます。「秒」列は計算用の数値です。</p>
-      <div class="card" style="padding:12px;margin-bottom:8px">
-        <button class="btn ghost tap" id="openImport" style="width:100%">名簿の写真から読み込む</button>
-        <p class="hint" style="margin:8px 0 0">紙の名簿に手書きした記録を写真から読み取って、この表に入れます。そのままExcelに出せます。</p>
-      </div>
+      <p class="hint" style="margin:8px 0 16px">行をタップすると距離を直せます。「距離」列は計算用の数値（m）です。</p>
     </div>
 
     <div class="footBar row2">
       <button class="btn primary tap" id="expXlsx">Excelで保存</button>
       <button class="btn ghost tap" id="expCsv">CSVで保存</button>
       <button class="btn ghost tap" id="copyTable">表をコピー</button>
-      <button class="btn ghost tap" id="copyTimes">タイム列だけコピー</button>
+      <button class="btn ghost tap" id="copyTimes">距離列だけコピー</button>
     </div>
   </section>
 
@@ -293,13 +289,19 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
       <label class="lbl"><span>種目</span>
         <input id="setEvent" class="field" type="text" list="eventList">
         <datalist id="eventList">
-          <option value="50m走"></option><option value="100m走"></option>
-          <option value="持久走"></option><option value="ハードル走"></option><option value="リレー"></option>
+          <option value="5分間走"></option><option value="6分間走"></option><option value="10分間走"></option>
+          <option value="12分間走"></option><option value="15分間走"></option><option value="20分間走"></option>
         </datalist>
       </label>
       <label class="lbl"><span>実施日</span><input id="setDate" class="field num" type="date"></label>
-      <label class="lbl"><span>1回に走る人数（この人数ぶんゴールを押すと自動で止まります）</span>
-        <input id="setLaneCount" class="field num" type="number" min="1" max="8" step="1"></label>
+      <div class="row2">
+        <label class="lbl"><span>走る時間（分）</span>
+          <input id="setMinutes" class="field num" type="number" min="1" max="60" step="1"></label>
+        <label class="lbl"><span>1周の距離（m）</span>
+          <input id="setLapLen" class="field num" type="number" min="1" max="2000" step="1"></label>
+      </div>
+      <label class="lbl"><span>一度に走る人数（1〜100）</span>
+        <input id="setLaneCount" class="field num" type="number" min="1" max="100" step="1"></label>
       <div class="lbl">
         <span>各クラスの人数</span>
         <div class="row4">
@@ -312,66 +314,10 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
       <button class="btn primary tap" id="startMeasure" style="width:100%;padding:16px;font-size:17px">この設定で計測をはじめる ▶</button>
       <div class="divider">
         <button class="btn danger tap" id="clearAll" style="width:100%">この種目の記録をすべて消す</button>
-        <p class="hint" style="margin:8px 0 0">記録はこの端末のブラウザに自動保存されます。別の端末には引き継がれないので、計測が終わったらExcelに出しておいてください。インターネットにつながっていなくても、写真の読み取り以外はすべて使えます。</p>
+        <p class="hint" style="margin:8px 0 0">記録はこの端末のブラウザに自動保存されます。別の端末には引き継がれないので、計測が終わったらExcelに出しておいてください。インターネットにつながっていなくても、すべての機能が使えます。</p>
       </div>
     </div>
   </section>
-</div>
-
-<!-- 名簿の写真から読み込む -->
-<div class="sheet" id="importSheet" hidden>
-  <div>
-    <div class="sheetHead">
-      <span class="t">名簿の写真から読み込む</span>
-      <button class="btn ghost sm tap" id="imClose">閉じる</button>
-    </div>
-    <p class="imMsg" id="imMsg" hidden></p>
-
-    <div id="imNone" hidden>
-      <p id="imNoneText" style="margin:0 0 8px;font-size:14px;line-height:1.7"></p>
-    </div>
-
-    <div id="imPick" hidden>
-      <div class="lbl" style="margin-bottom:12px">
-        <span>どのクラスの名簿ですか</span>
-        <div class="seg" id="imClassSeg">
-          <button class="tap" data-c="0" aria-pressed="true">写真から</button>
-          <button class="tap" data-c="1" aria-pressed="false">1組</button>
-          <button class="tap" data-c="2" aria-pressed="false">2組</button>
-          <button class="tap" data-c="3" aria-pressed="false">3組</button>
-          <button class="tap" data-c="4" aria-pressed="false">4組</button>
-        </div>
-      </div>
-      <label class="lbl" style="margin-bottom:12px"><span>名簿の写真</span>
-        <input id="imFile" class="field" type="file" accept="image/jpeg,image/png,image/webp" multiple></label>
-      <button class="btn primary tap" id="imRun" style="width:100%" disabled>読み取る</button>
-      <p class="hint" style="margin:8px 0 0;line-height:1.7">1クラスぶんの名簿を、真上から紙いっぱいに撮ってください。読み取るのは出席番号とタイムだけで、氏名は取り込みません。写真はClaudeに送られ、読み取りにはあなたのClaudeの利用枠を使います。</p>
-    </div>
-
-    <div id="imBusy" hidden>
-      <p style="margin:8px 0 12px;font-size:16px;font-weight:700;text-align:center">読み取り中…</p>
-      <p class="hint" style="margin:0 0 12px;text-align:center">30秒〜1分ほどかかります。このまま待ってください。</p>
-      <button class="btn ghost tap" id="imStop" style="width:100%">やめる</button>
-    </div>
-
-    <div id="imReview" hidden>
-      <p id="imSummary" style="margin:0 0 8px;font-size:13.5px;line-height:1.6"></p>
-      <div class="lbl" id="imFix" style="margin-bottom:8px" hidden>
-        <span style="color:var(--stop)">クラスが読み取れませんでした。どのクラスですか</span>
-        <div class="seg" id="imFixSeg">
-          <button class="tap" data-c="1" aria-pressed="false">1組</button>
-          <button class="tap" data-c="2" aria-pressed="false">2組</button>
-          <button class="tap" data-c="3" aria-pressed="false">3組</button>
-          <button class="tap" data-c="4" aria-pressed="false">4組</button>
-        </div>
-      </div>
-      <div id="imList" style="margin-bottom:12px"></div>
-      <div style="display:grid;gap:8px">
-        <button class="btn primary tap" id="imApply"></button>
-        <button class="btn ghost tap" id="imRetry">写真を選びなおす</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- 選手ピッカー -->
@@ -387,7 +333,7 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
       <button class="tap" data-c="3" aria-pressed="false">3組</button>
       <button class="tap" data-c="4" aria-pressed="false">4組</button>
     </div>
-    <p class="hint" style="margin:0 0 8px">うすい番号は記録ずみ（押すと上書きします）</p>
+    <p class="hint" style="margin:0 0 8px">うすい番号は記録ずみ（押すと上書きします）。1人選ぶと次の空きカードの選択に進みます。</p>
     <div class="pkGrid" id="pkGrid"></div>
   </div>
 </div>
@@ -405,7 +351,7 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
       <button class="key tap num" data-k="1">1</button><button class="key tap num" data-k="2">2</button><button class="key tap num" data-k="3">3</button>
       <button class="key tap num" data-k="4">4</button><button class="key tap num" data-k="5">5</button><button class="key tap num" data-k="6">6</button>
       <button class="key tap num" data-k="7">7</button><button class="key tap num" data-k="8">8</button><button class="key tap num" data-k="9">9</button>
-      <button class="key tap num" data-k=".">.</button><button class="key tap num" data-k="0">0</button><button class="key tap num" data-k=":">:</button>
+      <span></span><button class="key tap num" data-k="0">0</button><button class="key tap num" data-k="00">00</button>
     </div>
     <div class="row2" style="margin-top:8px">
       <button class="btn ghost tap" id="kpBack">← 消す</button>
@@ -415,7 +361,7 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
   </div>
 </div>
 
-<!-- 着順カードの操作 -->
+<!-- カードの操作 -->
 <div class="sheet" id="laneSheet" hidden>
   <div>
     <div class="sheetHead">
@@ -423,9 +369,10 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
       <button class="btn ghost sm tap" id="lsClose">閉じる</button>
     </div>
     <div style="display:grid;gap:8px">
-      <button class="btn primary tap" id="lsPick">選手を選びなおす</button>
-      <button class="btn ghost tap" id="lsType">タイムを直す</button>
-      <button class="btn ghost tap" id="lsClear" style="color:var(--stop)">このタイムを消す</button>
+      <button class="btn primary tap" id="lsX">端数（m）を入れる</button>
+      <button class="btn ghost tap" id="lsLaps">周回数を直す</button>
+      <button class="btn ghost tap" id="lsPick">選手を選びなおす</button>
+      <button class="btn ghost tap" id="lsClear" style="color:var(--stop)">このカードを空にする</button>
     </div>
   </div>
 </div>
@@ -446,106 +393,100 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
 <script>
 (function(){
   "use strict";
-  const KEY="taiiku-kiroku-v3", OLD_KEY="taiiku-kiroku-v2", $=(s)=>document.querySelector(s);
-  const byT=(a,b)=>a.t-b.t;
+  const KEY="taiiku-jikansou-v1", $=(s)=>document.querySelector(s);
   const d=new Date();
   const iso=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 
-  /* race.f = ゴールした順のタイム。c/n は走り終わってから割り当てる（それまで null） */
+  /* 時間走：決まった時間を走り、走った距離（周回数×1周＋端数）を記録する。
+     race.r = 走る人のカード。走る前に c/n を割り当て、走行中はカードをタップするたびに laps が+1 */
   let S={
-    grade:"3年", event:"50m走", date:iso,
+    grade:"3年", event:"5分間走", date:iso,
     counts:{1:35,2:34,3:35,4:33},
-    laneCount:4,
+    laneCount:8, minutes:5, lapLen:200,
     results:[],
-    race:{g:1, f:[]},
+    race:{g:1, r:[]},
+    clk:{t0:null, fz:0},
     sample:true
   };
   let undoStack=[], filter="all", sortMode="no", storageOK=true;
 
   const SAMPLE={
     results:[
-      {c:1,n:5,t:9.12,g:1},{c:3,n:12,t:8.44,g:1},{c:2,n:21,t:9.67,g:1},{c:4,n:3,t:8.91,g:1},
-      {c:2,n:7,t:8.20,g:2},{c:4,n:18,t:10.05,g:2},{c:1,n:30,t:9.30,g:2},{c:3,n:2,t:8.75,g:2}
+      {c:1,n:5,laps:6,x:80,d:1280,g:1},{c:3,n:12,laps:7,x:0,d:1400,g:1},{c:2,n:21,laps:5,x:120,d:1120,g:1},{c:4,n:3,laps:6,x:20,d:1220,g:1},
+      {c:2,n:7,laps:8,x:40,d:1640,g:2},{c:4,n:18,laps:5,x:0,d:1000,g:2},{c:1,n:30,laps:6,x:150,d:1350,g:2},{c:3,n:2,laps:7,x:60,d:1460,g:2}
     ],
-    race:{g:3, f:[{t:8.31,c:3,n:8},{t:8.76,c:null,n:null},{t:9.02,c:null,n:null},{t:9.48,c:null,n:null}]}
+    race:{g:3, r:[{c:3,n:8,laps:6,x:0},{c:1,n:14,laps:5,x:0},{c:2,n:3,laps:7,x:0},null,null,null,null,null]}
   };
+  const emptyR=(n)=>new Array(n).fill(null);
 
   function load(){
     try{
       localStorage.setItem(KEY+"-probe","1"); localStorage.removeItem(KEY+"-probe");
-      let raw=localStorage.getItem(KEY);
+      const raw=localStorage.getItem(KEY);
       if(raw){ S=Object.assign(S,JSON.parse(raw)); return; }
-      raw=localStorage.getItem(OLD_KEY);
-      if(raw){
-        /* 前の版（レーン方式）の記録と設定を引き継ぐ */
-        const o=JSON.parse(raw);
-        ["grade","event","date","counts","laneCount"].forEach(k=>{ if(o[k]!=null) S[k]=o[k]; });
-        if(!o.sample){
-          S.results=o.results||[];
-          const lanes=(o.race&&o.race.lanes)||[];
-          S.race={g:(o.race&&o.race.g)||1, f:lanes.filter(l=>l&&l.t!=null).sort(byT)};
-          S.sample=false; return;
-        }
-      }
     }catch(e){ storageOK=false; }
     S.results=SAMPLE.results.slice(); S.race=JSON.parse(JSON.stringify(SAMPLE.race)); S.sample=true;
   }
   function save(){ if(!storageOK) return; try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){ storageOK=false; $("#storageBar").hidden=false; } }
-  function dropSample(){ if(S.sample){ S.results=[]; S.race={g:1,f:[]}; undoStack=[]; } }
+  function dropSample(){ if(S.sample){ S.results=[]; S.race={g:1,r:emptyR(S.laneCount)}; undoStack=[]; } }
 
-  /* ---- 時間 ---- */
-  function fmt(sec){
-    if(sec==null) return "";
-    if(sec<60) return sec.toFixed(2);
-    const m=Math.floor(sec/60), s=sec-m*60;
-    return m+":"+(s<10?"0":"")+s.toFixed(2);
-  }
-  function parseInput(str){
-    if(!str) return null;
-    if(str.includes(":")){
-      const p=str.split(":"); if(p.length!==2) return null;
-      const m=parseFloat(p[0]||"0"), s=parseFloat(p[1]||"0");
-      if(isNaN(m)||isNaN(s)) return null;
-      return Math.round((m*60+s)*100)/100;
-    }
-    const v=parseFloat(str); return isNaN(v)?null:Math.round(v*100)/100;
-  }
+  const dist=(l)=>l.laps*S.lapLen+(l.x||0);
+  const fmtD=(v)=>v==null?"":String(Math.round(v))+"m";
 
-  /* ---- ストップウォッチ ----
-     t0 は止めても捨てない。人数ぶん押して自動で止まったあと「1つ戻す」をしたら、
-     同じスタート時刻のまま計測を続けられるようにするため。 */
-  let running=false,t0=0,frozen=0,raf=0,autoStopped=false,lastGoalAt=0;
-  const clk=()=>performance&&performance.now?performance.now():Date.now();
-  function now(){ return running? (clk()-t0)/1000 : frozen; }
-  function tick(){ $("#clock").textContent=fmt(Math.floor(now()*100)/100); if(running) raf=requestAnimationFrame(tick); }
-  function start(){ if(running) return; running=true; autoStopped=false; t0=clk(); raf=requestAnimationFrame(tick); render(); }
-  function stop(auto){ if(!running) return; frozen=now(); running=false; autoStopped=!!auto; cancelAnimationFrame(raf); tick(); render(); }
-  function resume(){ if(running) return; running=true; autoStopped=false; raf=requestAnimationFrame(tick); render(); }
-  function resetWatch(){ running=false; autoStopped=false; cancelAnimationFrame(raf); frozen=0; tick(); render(); }
+  /* ---- 時計（残り時間のカウントダウン）----
+     開始時刻を保存しているので、画面を再読み込みしても時間が続く。 */
+  let running=false,t0=0,frozen=0,raf=0,actx=null;
+  const total=()=>Math.round(S.minutes*60);
+  const clk=()=>Date.now();
+  function elapsed(){ return running ? Math.min(total(),(clk()-t0)/1000) : frozen; }
+  function phase(){ if(running) return "run"; if(frozen>0) return frozen>=total()?"done":"pause"; return "idle"; }
+  function persistClk(){ S.clk={t0:running?t0:null, fz:frozen}; save(); }
+  function fmtClock(s){ return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
+  function tick(){
+    const e=elapsed();
+    $("#clock").textContent=fmtClock(Math.ceil(Math.max(0,total()-e)));
+    if(running){ if(e>=total()){ finish(); return; } raf=requestAnimationFrame(tick); }
+  }
+  function beep(n){
+    try{
+      actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+      if(actx.state==="suspended") actx.resume();
+      for(let i=0;i<n;i++){
+        const o=actx.createOscillator(), g=actx.createGain(), t=actx.currentTime+i*0.3;
+        o.frequency.value=n>1?1100:880; o.connect(g); g.connect(actx.destination);
+        g.gain.setValueAtTime(0.25,t); g.gain.setValueAtTime(0,t+0.18); o.start(t); o.stop(t+0.2);
+      }
+    }catch(e){}
+    try{ if(navigator.vibrate) navigator.vibrate(n>1?[200,100,200,100,200]:100); }catch(e){}
+  }
+  function start(){ if(running) return; running=true; frozen=0; t0=clk(); persistClk(); beep(1); tick(); render(); }
+  function pause(){ if(!running) return; frozen=elapsed(); running=false; cancelAnimationFrame(raf); persistClk(); tick(); render(); }
+  function resume(){ if(running) return; running=true; t0=clk()-frozen*1000; persistClk(); tick(); render(); }
+  function finish(){ frozen=total(); running=false; cancelAnimationFrame(raf); persistClk(); tick(); beep(3); render(); toast("終了！ 端数(m)を入れて確定します"); }
+  function resetClock(){ running=false; frozen=0; cancelAnimationFrame(raf); persistClk(); tick(); render(); }
 
   /* ---- 取り消し ---- */
-  function snap(){ undoStack.push(JSON.stringify({results:S.results,race:S.race})); if(undoStack.length>30) undoStack.shift(); }
+  function snap(){ undoStack.push(JSON.stringify({results:S.results,race:S.race})); if(undoStack.length>60) undoStack.shift(); }
   function undo(){
     const u=undoStack.pop(); if(!u) return;
     const o=JSON.parse(u); S.results=o.results; S.race=o.race; S.sample=false; save();
-    if(autoStopped && S.race.f.length<S.laneCount){ resume(); toast("1つ戻しました（計測を続けます）"); }
-    else { render(); toast("1つ戻しました"); }
+    render(); toast("1つ戻しました");
   }
   function commit(){ S.sample=false; save(); render(); }
 
   function findRec(c,n){ return S.results.find(r=>r.c===c&&r.n===n)||null; }
-  function inRace(c,n){ return S.race.f.some(l=>l.c===c&&l.n===n); }
-  function firstOrphan(){ return S.race.f.findIndex(l=>l.c==null); }
+  function inRace(c,n){ return S.race.r.some(l=>l&&l.c===c&&l.n===n); }
+  function firstEmpty(){ return S.race.r.findIndex(l=>!l); }
 
   function withRanks(){
     const rows=S.results.map(r=>Object.assign({},r));
-    const all=rows.slice().sort(byT);
+    const all=rows.slice().sort((a,b)=>b.d-a.d);
     let rank=0,prev=null,seen=0;
-    all.forEach(r=>{ seen++; if(prev===null||r.t>prev){rank=seen;prev=r.t;} r.rank=rank; });
+    all.forEach(r=>{ seen++; if(prev===null||r.d<prev){rank=seen;prev=r.d;} r.rank=rank; });
     [1,2,3,4].forEach(c=>{
-      const g=rows.filter(r=>r.c===c).sort(byT);
+      const g=rows.filter(r=>r.c===c).sort((a,b)=>b.d-a.d);
       let k=0,p=null,s2=0;
-      g.forEach(r=>{ s2++; if(p===null||r.t>p){k=s2;p=r.t;} r.crank=k; });
+      g.forEach(r=>{ s2++; if(p===null||r.d<p){k=s2;p=r.d;} r.crank=k; });
     });
     return rows;
   }
@@ -554,48 +495,53 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
   function whoHtml(c,n){ return '<span class="cb cb'+c+'">'+c+'組</span> <span class="num">'+n+'</span>'; }
 
   function renderRace(){
-    const f=S.race.f, cnt=Math.max(S.laneCount,f.length);
+    const r=S.race.r, ph=phase();
+    while(r.length<S.laneCount) r.push(null);
     let h="";
-    for(let i=0;i<cnt;i++){
-      const l=f[i]||null;
-      const st=!l ? "empty" : (l.c==null ? (running?"got":"orphan") : "timed");
-      let inner='<span class="laneno">'+(i+1)+'着</span>';
-      if(st==="empty"){
-        inner += running ? '<span class="sub">まだ</span>' : '<span class="who">＋ タイムを手入力</span>';
-      }else if(st==="timed"){
-        inner += '<span class="who">'+whoHtml(l.c,l.n)+'</span><span class="tm num">'+fmt(l.t)+'</span>';
-      }else{
-        inner += '<span class="tm num">'+fmt(l.t)+'</span><span class="sub">'+(running?"選手はあとで選ぶ":"タップして選手を選ぶ")+'</span>';
+    for(let i=0;i<r.length;i++){
+      const l=r[i];
+      let inner='<span class="laneno">'+(i+1)+'</span>';
+      if(!l){
+        inner += '<span class="who">'+(running?"（空き）":"＋ 選手を選ぶ")+'</span>';
+        h += '<button class="lane tap" data-i="'+i+'" data-s="empty">'+inner+'</button>';
+        continue;
       }
+      const st = ph==="run" ? "run" : (ph==="idle" ? "ready" : "timed");
+      inner += '<span class="who">'+whoHtml(l.c,l.n)+'</span>'
+             + '<span class="tm num">'+l.laps+'周</span>'
+             + '<span class="sub num">'+(ph==="run" ? "タップで +1周" : (l.x? "+"+l.x+"m ＝ "+fmtD(dist(l)) : fmtD(dist(l))))+'</span>';
       h += '<button class="lane tap" data-i="'+i+'" data-s="'+st+'">'+inner+'</button>';
     }
-    $("#lanes").innerHTML=h;
+    const box=$("#lanes");
+    box.innerHTML=h;
+    box.classList.toggle("many", r.length>8);
 
-    const orph=f.filter(l=>l.c==null).length, idle=!running&&f.length===0;
-    const go=$("#btnGo");
-    go.hidden = !running && !idle;
-    go.dataset.s = running ? "goal" : "start";
-    go.innerHTML = running
-      ? '<span class="big">ゴール！</span><span class="sub">タップで '+(f.length+1)+'着 のタイムを記録</span>'
-      : '<span class="big">スタート</span><span class="sub">「用意、ドン」で押す</span>';
-    $("#btnStop").disabled=!running;
+    const set=r.filter(l=>l).length, go=$("#btnGo");
+    go.hidden = ph!=="idle";
+    go.dataset.s="start";
+    go.innerHTML='<span class="big">スタート</span><span class="sub">'+S.minutes+'分間・「よーい、ドン」で押す</span>';
+    const sb=$("#btnStop");
+    sb.disabled = ph==="idle"||ph==="done";
+    sb.textContent = ph==="pause" ? "再開" : "ストップ";
+    sb.className = "btn tap "+(ph==="pause"?"primary":"stopc");
 
-    $("#raceNo").textContent="第 "+S.race.g+" 組";
-    $("#btnNext").disabled = running || f.length===0;
-    $("#clockHint").textContent = running
-      ? "ゴールのたびに同じボタンをタップ（"+f.length+" / "+S.laneCount+" 人）"
-      : (idle ? "走る前に選手を選ぶ必要はありません"
-              : (orph ? "着順に、だれだったかを選びます" : "確定して次の組へ進めます"));
-    $("#raceHint").textContent = running
-      ? S.laneCount+"人ぶん押すと自動で止まります。人数が少ない組は「ストップ」で止めてください。"
-      : (orph ? "選手が決まっていないタイムが "+orph+" 件あります。赤いカードをタップして選んでください。"
-              : (f.length ? "確定すると "+f.length+" 人分が記録に入り、次の組に進みます。"
-                          : "スタート → ゴールのたびにタップ → 走り終わってから ○組○番 を選ぶ、の順です。"));
+    $("#clockLabel").textContent = ph==="done" ? "終了" : (ph==="idle" ? S.minutes+"分間走（1周 "+S.lapLen+"m）" : "残り時間");
+    $("#raceNo").textContent="第 "+S.race.g+" 組　"+set+" 人";
+    $("#btnNext").disabled = running || set===0;
+    $("#clockHint").textContent =
+        ph==="run"   ? "1周するたびに、その子のカードをタップ"
+      : ph==="pause" ? "ストップ中です（再開できます）"
+      : ph==="done"  ? "カードをタップして端数（m）を入れ、確定します"
+      : (set ? "カードを選んで、スタートを押します（"+set+"人）" : "まず走る人のカードをタップして選びます");
+    $("#raceHint").textContent =
+        ph==="run"  ? "押しまちがいは「1つ戻す」。時間がくると自動で止まります。"
+      : ph==="done" ? "ゴール後の端数は、カードをタップ →「端数（m）を入れる」。何も入れなければ周回ぶんだけが記録されます。"
+      : "確定すると "+set+" 人分が記録に入り、次の組に進みます。";
   }
 
   function renderProgress(){
-    const total=[1,2,3,4].reduce((a,c)=>a+(S.counts[c]||0),0);
-    $("#progTotal").textContent=S.results.length+" / "+total+" 人";
+    const tot=[1,2,3,4].reduce((a,c)=>a+(S.counts[c]||0),0);
+    $("#progTotal").textContent=S.results.length+" / "+tot+" 人";
     let h="";
     [1,2,3,4].forEach(c=>{
       const done=S.results.filter(r=>r.c===c).length, cnt=S.counts[c]||0;
@@ -607,27 +553,28 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
   function renderTable(){
     let rows=withRanks();
     if(filter!=="all") rows=rows.filter(r=>r.c===parseInt(filter,10));
-    rows.sort(sortMode==="no" ? (a,b)=>a.c-b.c||a.n-b.n : (a,b)=>a.t-b.t||a.c-b.c||a.n-b.n);
+    rows.sort(sortMode==="no" ? (a,b)=>a.c-b.c||a.n-b.n : (a,b)=>b.d-a.d||a.c-b.c||a.n-b.n);
 
-    let h='<thead><tr><th>全体</th><th>組内</th><th>クラス</th><th>番号</th><th>タイム</th><th>秒</th><th>組</th></tr></thead><tbody>';
+    let h='<thead><tr><th>全体</th><th>組内</th><th>クラス</th><th>番号</th><th>距離(m)</th><th>周</th><th>端数</th><th>組</th></tr></thead><tbody>';
     rows.forEach(r=>{
       h+='<tr class="tap" data-c="'+r.c+'" data-n="'+r.n+'">'
        + '<td'+(r.rank===1?' style="color:var(--blue);font-weight:700"':'')+'>'+r.rank+'</td>'
        + '<td style="color:var(--ink-2)">'+r.crank+'</td>'
        + '<td><span class="cb cb'+r.c+'">'+r.c+'組</span></td>'
        + '<td>'+r.n+'</td>'
-       + '<td style="font-weight:700">'+fmt(r.t)+'</td>'
-       + '<td style="color:var(--ink-2)">'+r.t.toFixed(2)+'</td>'
-       + '<td style="color:var(--ink-3)">'+(r.g==null?"写真":r.g)+'</td></tr>';
+       + '<td style="font-weight:700">'+r.d+'</td>'
+       + '<td style="color:var(--ink-2)">'+r.laps+'</td>'
+       + '<td style="color:var(--ink-2)">'+r.x+'</td>'
+       + '<td style="color:var(--ink-3)">'+(r.g==null?"":r.g)+'</td></tr>';
     });
-    if(!rows.length) h+='<tr><td colspan="7" style="text-align:center;color:var(--ink-3);padding:24px 0">まだ記録がありません</td></tr>';
+    if(!rows.length) h+='<tr><td colspan="8" style="text-align:center;color:var(--ink-3);padding:24px 0">まだ記録がありません</td></tr>';
     $("#table").innerHTML=h+'</tbody>';
 
-    const ts=rows.map(r=>r.t);
+    const ds=rows.map(r=>r.d);
     const cnt = filter==="all" ? [1,2,3,4].reduce((a,c)=>a+(S.counts[c]||0),0) : (S.counts[parseInt(filter,10)]||0);
-    $("#sumDone").textContent=ts.length+"/"+cnt;
-    $("#sumBest").textContent=ts.length?fmt(Math.min.apply(null,ts)):"—";
-    $("#sumAvg").textContent =ts.length?fmt(Math.round(ts.reduce((a,b)=>a+b,0)/ts.length*100)/100):"—";
+    $("#sumDone").textContent=ds.length+"/"+cnt;
+    $("#sumBest").textContent=ds.length?Math.max.apply(null,ds)+"m":"—";
+    $("#sumAvg").textContent =ds.length?Math.round(ds.reduce((a,b)=>a+b,0)/ds.length)+"m":"—";
   }
 
   function render(){
@@ -643,12 +590,12 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
   function toast(m){ const e=$("#toast"); e.textContent=m; e.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>{e.hidden=true;},1900); }
 
   /* ---- 選手ピッカー ---- */
-  let pkClass=1, pkCb=null, pkOpenedAt=0;
+  let pkClass=1, pkCb=null;
   function openPicker(title, cb, preferClass){
     pkCb=cb; if(preferClass) pkClass=preferClass;
     $("#pkTitle").textContent=title;
     document.querySelectorAll("#pkClassSeg button").forEach(b=>b.setAttribute("aria-pressed", parseInt(b.dataset.c,10)===pkClass));
-    renderPicker(); $("#picker").hidden=false; pkOpenedAt=clk();
+    renderPicker(); $("#picker").hidden=false;
   }
   function closePicker(){ $("#picker").hidden=true; pkCb=null; }
   function renderPicker(){
@@ -656,7 +603,7 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
     for(let n=1;n<=cnt;n++){
       const r=findRec(pkClass,n), used=inRace(pkClass,n);
       h+='<button class="pk tap" data-n="'+n+'" data-done="'+(r?1:0)+'"'+(used?' disabled style="opacity:.3"':'')+'>'
-        +'<span class="pn num">'+n+'</span><span class="pt num">'+(used?"この組":(r?fmt(r.t):"&nbsp;"))+'</span></button>';
+        +'<span class="pn num">'+n+'</span><span class="pt num">'+(used?"この組":(r?r.d+"m":"&nbsp;"))+'</span></button>';
     }
     $("#pkGrid").innerHTML=h;
   }
@@ -667,18 +614,16 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
   });
   $("#pkClose").onclick=closePicker;
   $("#picker").addEventListener("click",(e)=>{
-    /* ゴールを連打した指がそのままシートに当たるのを防ぐ */
-    if(clk()-pkOpenedAt<350) return;
     if(e.target===$("#picker")){ closePicker(); return; }
     const b=e.target.closest("[data-n]"); if(!b||b.disabled) return;
     const n=parseInt(b.dataset.n,10), cb=pkCb;
     closePicker(); if(cb) cb(pkClass,n);
   });
 
-  /* ---- テンキー ---- */
-  let kpTarget=null, kpBuf="";
-  function openKeypad(target,label,current){
-    kpTarget=target; kpBuf="";
+  /* ---- テンキー（整数のみ）---- */
+  let kpTarget=null, kpBuf="", kpUnit="";
+  function openKeypad(target,label,current,unit){
+    kpTarget=target; kpBuf=""; kpUnit=unit||"";
     $("#kpWho").innerHTML=label;
     $("#kpDelete").hidden = !(target.kind==="result");
     $("#keypad").dataset.cur = current==null?"":current;
@@ -686,125 +631,119 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
   }
   function closeKeypad(){ $("#keypad").hidden=true; kpTarget=null; }
   function updateKp(){
-    $("#kpEcho").textContent=kpBuf||"—";
-    const v=parseInput(kpBuf), cur=$("#keypad").dataset.cur;
-    $("#kpParsed").textContent = v==null
-      ? (cur?("いまの記録："+fmt(parseFloat(cur))):"数字を入力してください（例 8.45／3:45.6）")
-      : "→ "+fmt(v)+"（"+v.toFixed(2)+"秒）";
+    $("#kpEcho").textContent=kpBuf?kpBuf+kpUnit:"—";
+    const cur=$("#keypad").dataset.cur;
+    $("#kpParsed").textContent = kpBuf ? "" : (cur!==""?("いまの値："+cur+kpUnit):"数字を入力してください");
   }
   $("#keypad").addEventListener("click",(e)=>{
     if(e.target===$("#keypad")) closeKeypad();
-    const k=e.target.closest("[data-k]"); if(k){ kpBuf+=k.dataset.k; updateKp(); }
+    const k=e.target.closest("[data-k]");
+    if(k && kpBuf.length<5){ kpBuf=(kpBuf+k.dataset.k).replace(/^0+(?=\d)/,""); updateKp(); }
   });
   $("#kpBack").onclick=()=>{ kpBuf=kpBuf.slice(0,-1); updateKp(); };
   $("#kpClose").onclick=closeKeypad;
   $("#kpOk").onclick=()=>{
-    const v=parseInput(kpBuf); if(v==null||v<=0){ toast("数字が入っていません"); return; }
-    const tg=kpTarget;
-    if(tg.kind==="import"){ closeKeypad(); importSetTime(tg.i,v); return; }
+    if(kpBuf===""){ toast("数字が入っていません"); return; }
+    const v=parseInt(kpBuf,10), tg=kpTarget;
     snap();
-    let added=null;
-    if(tg.kind==="lane"){ S.race.f[tg.i].t=v; S.race.f.sort(byT); }
-    else if(tg.kind==="new"){ added={t:v,c:null,n:null}; S.race.f.push(added); S.race.f.sort(byT); }
-    else { const r=findRec(tg.c,tg.n); if(r) r.t=v; }
-    closeKeypad(); commit(); toast("タイムを入れました");
-    if(added) setTimeout(()=>pickInto(S.race.f.indexOf(added)),120);
+    if(tg.kind==="laps"){ const l=S.race.r[tg.i]; if(l) l.laps=v; }
+    else if(tg.kind==="x"){ const l=S.race.r[tg.i]; if(l) l.x=v; }
+    else {
+      const r=findRec(tg.c,tg.n);
+      if(r){ r.d=v; r.laps=Math.floor(v/S.lapLen); r.x=v-r.laps*S.lapLen; }
+    }
+    closeKeypad(); commit(); toast("入れました");
   };
   $("#kpDelete").onclick=()=>{
     snap(); S.results=S.results.filter(r=>!(r.c===kpTarget.c&&r.n===kpTarget.n));
     closeKeypad(); commit(); toast("記録を削除しました");
   };
 
-  /* ---- 着順カードの操作 ---- */
+  /* ---- カードの操作 ---- */
   let lsIndex=null;
+  function laneLabel(i){ const l=S.race.r[i]; return l?whoHtml(l.c,l.n)+"　"+l.laps+"周 + "+(l.x||0)+"m":""; }
   function openLaneSheet(i){
-    lsIndex=i; const l=S.race.f[i];
-    $("#lsTitle").innerHTML=(i+1)+"着　"+fmt(l.t)+"　"+(l.c?whoHtml(l.c,l.n):"");
+    lsIndex=i; $("#lsTitle").innerHTML=laneLabel(i);
     $("#laneSheet").hidden=false;
   }
   function closeLaneSheet(){ $("#laneSheet").hidden=true; lsIndex=null; }
   $("#lsClose").onclick=closeLaneSheet;
   $("#laneSheet").addEventListener("click",(e)=>{ if(e.target===$("#laneSheet")) closeLaneSheet(); });
-  $("#lsPick").onclick=()=>{ const i=lsIndex; closeLaneSheet(); pickInto(i); };
-  $("#lsType").onclick=()=>{
-    const i=lsIndex, l=S.race.f[i]; closeLaneSheet();
-    openKeypad({kind:"lane",i:i}, (i+1)+"着　"+(l.c?whoHtml(l.c,l.n):""), l.t);
-  };
-  $("#lsClear").onclick=()=>{ snap(); S.race.f.splice(lsIndex,1); closeLaneSheet(); commit(); };
+  $("#lsPick").onclick=()=>{ const i=lsIndex; closeLaneSheet(); pickInto(i,false); };
+  $("#lsX").onclick=()=>{ const i=lsIndex, l=S.race.r[i]; closeLaneSheet(); openKeypad({kind:"x",i:i}, whoHtml(l.c,l.n)+"　端数（m）", l.x||0, "m"); };
+  $("#lsLaps").onclick=()=>{ const i=lsIndex, l=S.race.r[i]; closeLaneSheet(); openKeypad({kind:"laps",i:i}, whoHtml(l.c,l.n)+"　周回数", l.laps, "周"); };
+  $("#lsClear").onclick=()=>{ snap(); S.race.r[lsIndex]=null; closeLaneSheet(); commit(); };
 
-  function pickInto(i){
-    const l=S.race.f[i]; if(!l) return;
-    openPicker((i+1)+"着　"+fmt(l.t)+"　だれ？", (c,n)=>{
-      const cur=S.race.f[i]; if(!cur) return;
-      snap(); cur.c=c; cur.n=n; commit();
+  function pickInto(i,chain){
+    const l=S.race.r[i];
+    openPicker((i+1)+"番目のカード　だれ？", (c,n)=>{
+      snap();
+      const cur=S.race.r[i];
+      S.race.r[i]={c:c,n:n,laps:cur?cur.laps:0,x:cur?(cur.x||0):0};
+      commit();
       if(findRec(c,n)) toast(c+"組 "+n+"番は記録ずみです（確定すると上書き）");
-      const nx=firstOrphan();
-      if(nx>=0) setTimeout(()=>pickInto(nx),120);
-    }, l.c||undefined);
-  }
-  function assignNext(){
-    if(running||!$("#picker").hidden||$("#tab-measure").hidden) return;
-    const nx=firstOrphan(); if(nx>=0) pickInto(nx);
+      if(chain){ const nx=firstEmpty(); if(nx>=0) setTimeout(()=>pickInto(nx,true),120); }
+    }, l?l.c:undefined);
   }
 
-  /* ---- スタート／ゴール ---- */
-  function goal(){
-    if(!running) return;
-    const t=Math.floor(now()*100)/100, at=clk();
-    if(t<0.8 || at-lastGoalAt<120) return;          /* スタート直後の二度押し・チャタリングよけ */
-    if(S.race.f.length>=S.laneCount) return;
-    lastGoalAt=at;
-    snap(); S.race.f.push({t:t,c:null,n:null});
-    if(S.race.f.length>=S.laneCount){ stop(true); commit(); setTimeout(assignNext,450); }
-    else commit();
-  }
-  function press(){
-    if(running){ goal(); return; }
-    if(S.race.f.length) return;
-    if(S.sample) return;
-    start();
+  /* ---- スタート／周回 ---- */
+  const lastLap={};
+  function lap(i){
+    const l=S.race.r[i], at=clk();
+    if(at-(lastLap[i]||0)<1500){ toast("連続タップは無視しました"); return; }   /* 二度押しよけ */
+    lastLap[i]=at;
+    snap(); l.laps++; commit();
+    try{ if(navigator.vibrate) navigator.vibrate(25); }catch(e){}
   }
   const go=$("#btnGo");
-  go.addEventListener("pointerdown",(e)=>{ if(e.button) return; e.preventDefault(); press(); });
-  go.addEventListener("click",(e)=>{ if(e.detail===0) press(); });   /* キーボード操作 */
-  $("#btnStop").onclick=()=>{ if(!running) return; stop(false); setTimeout(assignNext,300); };
-  $("#btnReset").onclick=()=> resetWatch();
+  go.addEventListener("pointerdown",(e)=>{
+    if(e.button) return; e.preventDefault();
+    if(phase()!=="idle") return;
+    if(S.sample){ toast("先に「消して始める」を押してください"); return; }
+    if(!S.race.r.some(l=>l)){ toast("走る人のカードを選んでください"); return; }
+    start();
+  });
+  $("#btnStop").onclick=()=>{ const p=phase(); if(p==="run") pause(); else if(p==="pause") resume(); };
   $("#btnUndo").onclick=undo;
 
   $("#lanes").addEventListener("click",(e)=>{
     const b=e.target.closest("[data-i]"); if(!b) return;
-    const i=parseInt(b.dataset.i,10), l=S.race.f[i];
-    if(running){ toast("選手は走り終わってから選びます"); return; }
-    if(!l){ openKeypad({kind:"new"}, "タイムを手入力", null); return; }
-    if(l.c==null){ pickInto(i); return; }
+    const i=parseInt(b.dataset.i,10), l=S.race.r[i];
+    if(running){
+      if(!l){ toast("選手は走る前に選びます"); return; }
+      lap(i); return;
+    }
+    if(!l){ pickInto(i,phase()==="idle"); return; }
     openLaneSheet(i);
   });
 
   $("#btnNext").onclick=()=>{
     if(running) return;
-    if(firstOrphan()>=0){ toast("選手が決まっていないタイムがあります"); assignNext(); return; }
+    const set=S.race.r.filter(l=>l);
+    if(!set.length) return;
     snap();
-    S.race.f.forEach(l=>{
+    set.forEach(l=>{
       S.results=S.results.filter(r=>!(r.c===l.c&&r.n===l.n));
-      S.results.push({c:l.c,n:l.n,t:l.t,g:S.race.g});
+      S.results.push({c:l.c,n:l.n,laps:l.laps,x:l.x||0,d:dist(l),g:S.race.g});
     });
-    S.race={g:S.race.g+1, f:[]};
-    resetWatch(); commit(); toast("第 "+(S.race.g-1)+" 組を記録しました");
+    S.race={g:S.race.g+1, r:emptyR(S.laneCount)};
+    resetClock(); commit(); toast("第 "+(S.race.g-1)+" 組を記録しました");
     $("#tab-measure").scrollTop=0;
   };
   $("#clearRace").onclick=()=>{
-    if(S.sample){ dropSample(); resetWatch(); commit(); return; }
-    snap(); S.race.f=[]; resetWatch(); commit();
+    if(running){ toast("計測中はやり直せません。先にストップしてください"); return; }
+    if(S.sample){ dropSample(); resetClock(); commit(); return; }
+    snap(); S.race.r=emptyR(S.laneCount); resetClock(); commit();
   };
 
   $("#table").addEventListener("click",(e)=>{
     const tr=e.target.closest("tr[data-c]"); if(!tr) return;
     const c=parseInt(tr.dataset.c,10), n=parseInt(tr.dataset.n,10), r=findRec(c,n);
-    openKeypad({kind:"result",c:c,n:n}, whoHtml(c,n), r?r.t:null);
+    openKeypad({kind:"result",c:c,n:n}, whoHtml(c,n)+"　距離（m）", r?r.d:null, "m");
   });
 
-  $("#clearSample").onclick=()=>{ dropSample(); S.sample=false; resetWatch(); save(); render(); toast("空の状態にしました"); };
-  $("#clearAll").onclick=()=>{ snap(); S.results=[]; S.race={g:1,f:[]}; resetWatch(); commit(); toast("記録を消しました"); };
+  $("#clearSample").onclick=()=>{ dropSample(); S.sample=false; resetClock(); save(); render(); toast("空の状態にしました"); };
+  $("#clearAll").onclick=()=>{ if(running){ toast("計測中は消せません"); return; } snap(); S.results=[]; S.race={g:1,r:emptyR(S.laneCount)}; resetClock(); commit(); toast("記録を消しました"); };
 
   function showTab(name){
     document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute("aria-pressed",x.dataset.tab===name));
@@ -814,7 +753,7 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
   document.querySelectorAll('[data-tab]').forEach(b=>{ b.onclick=()=>showTab(b.dataset.tab); });
   $("#toSetup").onclick=()=>showTab("setup");
   $("#startMeasure").onclick=()=>{
-    if(S.sample){ dropSample(); S.sample=false; resetWatch(); save(); }
+    if(S.sample){ dropSample(); S.sample=false; resetClock(); save(); }
     render(); showTab("measure"); $("#tab-measure").scrollTop=0;
   };
   document.querySelectorAll("#filterSeg button").forEach(b=>{
@@ -828,19 +767,32 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
   bind("#setGrade",v=>S.grade=v); bind("#setEvent",v=>S.event=v); bind("#setDate",v=>S.date=v);
   [1,2,3,4].forEach(c=> bind("#cnt"+c, v=>{ S.counts[c]=Math.min(45,Math.max(0,parseInt(v,10)||0)); }));
 
+  $("#setLapLen").addEventListener("input",()=>{
+    const v=parseInt($("#setLapLen").value,10); if(!v) return;
+    S.lapLen=Math.min(2000,Math.max(1,v)); save(); render();
+  });
+  $("#setMinutes").addEventListener("input",()=>{
+    const el=$("#setMinutes"), v=parseInt(el.value,10); if(!v) return;
+    if(phase()!=="idle"){ toast("計測中・計測後は時間を変えられません（組を確定するか、やり直してください）"); el.value=S.minutes; return; }
+    S.minutes=Math.min(60,Math.max(1,v)); save(); tick(); render();
+  });
   $("#setLaneCount").addEventListener("input",()=>{
-    const el=$("#setLaneCount");
-    const n=Math.min(8,Math.max(1,parseInt(el.value,10)||4));
-    if(n<S.race.f.length){ toast("いまの組に "+S.race.f.length+" 人分のタイムがあるので減らせません"); el.value=S.laneCount; return; }
-    S.laneCount=n; save(); render();
+    const el=$("#setLaneCount"), raw=parseInt(el.value,10);
+    if(!raw) return;                                   /* 入力途中（空欄）は無視 */
+    const n=Math.min(100,Math.max(1,raw)), cur=S.race.r;
+    if(running){ toast("計測中は人数を変えられません"); el.value=S.laneCount; return; }
+    if(n<cur.length && cur.slice(n).some(l=>l)){ toast("いま使っているカードがあるので減らせません"); return; }
+    S.laneCount=n;
+    S.race.r = n>cur.length ? cur.concat(emptyR(n-cur.length)) : cur.slice(0,n);
+    save(); render();
   });
 
   /* ================= 出力 ================= */
   function matrix(){
     const rows=withRanks().sort((a,b)=> a.c-b.c || a.n-b.n);
-    const head=["クラス","出席番号","タイム","秒","学年順位","クラス内順位","組"];
-    const body=rows.map(r=>[ r.c+"組", r.n, fmt(r.t), Number(r.t.toFixed(2)), r.rank, r.crank, r.g==null?"":r.g ]);
-    return {title:S.grade+"　"+S.event+"　"+S.date.replace(/-/g,"/"), head:head, body:body};
+    const head=["クラス","出席番号","距離(m)","周回数","端数(m)","学年順位","クラス内順位","組"];
+    const body=rows.map(r=>[ r.c+"組", r.n, r.d, r.laps, r.x, r.rank, r.crank, r.g==null?"":r.g ]);
+    return {title:S.grade+"　"+S.event+"（1周"+S.lapLen+"m）　"+S.date.replace(/-/g,"/"), head:head, body:body};
   }
   function tsv(){ const m=matrix(); return [m.head].concat(m.body).map(r=>r.join("\t")).join("\n"); }
   function csv(){
@@ -902,7 +854,7 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
       });
       sd+='<row r="'+(ri+1)+'">'+cells+'</row>';
     });
-    const widths=[10,11,12,10,11,13,8];
+    const widths=[10,11,11,9,10,11,13,8];
     let cols="<cols>";
     widths.forEach((w,i)=>{ cols+='<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>'; });
     cols+="</cols>";
@@ -983,200 +935,28 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
     }catch(e){ showCopy(t); }
   }
   $("#copyTable").onclick=()=> copyText(tsv(),"表");
-  $("#copyTimes").onclick=()=> copyText(matrix().body.map(r=>r[2]).join("\n"),"タイム列");
-
-
-  /* ================= 名簿の写真から読み込む =================
-     公開版（Claudeのページ）でだけ動く。ローカルHTMLでは window.claude が無いので案内だけ出す。 */
-  let sampleFn=null, imgLimits=null, sampleChecked=!(window.claude&&window.claude.use);
-  try{
-    const p=window.claude&&window.claude.use&&window.claude.use("sample");
-    if(p&&p.then) p.then(x=>{
-      sampleFn=x||null;
-      if(x&&x.limits) return x.limits().then(l=>{ imgLimits=(l&&l.images)||null; });
-    }).catch(function(){}).then(()=>{ sampleChecked=true; });
-  }catch(e){ sampleChecked=true; }
-
-  let imClass=0, imRows=[], imCtl=null;
-  function imShow(step){ ["imNone","imPick","imBusy","imReview"].forEach(id=>{ $("#"+id).hidden=(id!==step); }); }
-  function imError(m){ const e=$("#imMsg"); e.textContent=m||""; e.hidden=!m; }
-  function closeImport(){ if(imCtl) imCtl.abort(); $("#importSheet").hidden=true; }
-
-  $("#openImport").onclick=()=>{
-    imError("");
-    if(sampleFn&&imgLimits){ imShow(imRows.length?"imReview":"imPick"); }
-    else{
-      $("#imNoneText").textContent = sampleChecked
-        ? "写真の読み取りは、インターネットにつないで開く公開版（Claudeのページ）でだけ使えます。このファイルを直接開いているときは使えません。"
-        : "準備中です。数秒待ってから、もう一度押してください。";
-      imShow("imNone");
-    }
-    $("#importSheet").hidden=false;
-  };
-  $("#imClose").onclick=closeImport;
-  $("#importSheet").addEventListener("click",e=>{ if(e.target===$("#importSheet")) closeImport(); });
-  document.querySelectorAll("#imClassSeg button").forEach(b=>{
-    b.onclick=()=>{ imClass=parseInt(b.dataset.c,10);
-      document.querySelectorAll("#imClassSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b)); };
-  });
-  $("#imFile").addEventListener("change",()=>{ $("#imRun").disabled=!($("#imFile").files&&$("#imFile").files.length); imError(""); });
-
-  /* 縦長の名簿は上半分・下半分に切って拡大して送る（行は横に並ぶので、上下にしか切らない） */
-  async function splitImage(file){
-    const bmp=await createImageBitmap(file), W=bmp.width, H=bmp.height;
-    if(H<1700 || H<W*1.15) return null;
-    const part=Math.round(H*0.56);
-    const mk=(off)=>new Promise((res,rej)=>{
-      const c=document.createElement("canvas"); c.width=W; c.height=part;
-      c.getContext("2d").drawImage(bmp,0,-off);
-      c.toBlob(b=>b?res(b):rej(new Error("toBlob")),"image/jpeg",0.92);
-    });
-    return [await mk(0), await mk(H-part)];
-  }
-  async function prepImages(files,maxCount){
-    if(files.length===1 && maxCount>=2){
-      try{
-        const parts=await splitImage(files[0]);
-        if(parts) return maxCount>=3 ? {mode:"whole+halves",blobs:[files[0]].concat(parts)} : {mode:"halves",blobs:parts};
-      }catch(e){}
-    }
-    return {mode:files.length>1?"many":"one", blobs:files.slice(0,maxCount)};
-  }
-  function buildPrompt(mode){
-    const pics = mode==="whole+halves" ? "画像は3枚あります。1枚目は名簿全体、2枚目と3枚目は同じ名簿の上半分と下半分を拡大したもので、境目は少し重なっています。列の位置は1枚目で確かめ、数字は拡大した画像で読んでください。"
-      : mode==="halves" ? "画像は2枚あり、同じ1枚の名簿の上半分と下半分です。境目は少し重なっています。列の並びは2枚とも同じです。"
-      : mode==="many" ? "画像は複数あります。すべての画像から読み取ってください。"
-      : "";
-    const cls = imClass
-      ? "この名簿は "+imClass+"組 です。すべての行の c を "+imClass+" にしてください。"
-      : "クラス（1〜4組）が名簿に書かれていれば c にその数字を、分からなければ c を null にしてください。";
-    return [
-      "添付の画像は、小学校の体育の記録を手書きで書き込んだクラス名簿の写真です。"+pics,
-      "各行から「出席番号」と「記録（タイム）」だけを読み取ってください。氏名は読み取らず、出力にも含めないでください。",
-      "種目は「"+S.event+"」です。記録の列が複数あるときは、この種目に合う列を選び、同じ種目で複数回の記録があれば最も速い記録を採用してください。",
-      cls,
-      "ルール:",
-      "- 記録が空欄・欠席・斜線の行は出力しない。",
-      "- t は秒の数値にする。例: 「8.45」「8秒45」「8\"45」→ 8.45 ／ 「3分45秒6」「3:45.6」「3'45\"6」→ 225.6",
-      "- raw には紙に書かれていたとおりの文字を入れる。",
-      "- 文字が読みにくい、ほかの行とくらべて不自然な値など、少しでも自信がない行は unsure を true にする。",
-      "- 同じ出席番号が重なり部分で2回見えても1回だけ出力する。",
-      "返答は次の形のJSONだけにしてください:",
-      '{"rows":[{"c":1,"n":5,"t":8.45,"raw":"8.45","unsure":false}]}'
-    ].join("\n");
-  }
-  function cleanRows(data){
-    const src=Array.isArray(data)?data:(data&&Array.isArray(data.rows)?data.rows:[]);
-    const out=[];
-    src.forEach(r=>{
-      if(!r) return;
-      const n=parseInt(r.n,10);
-      let t=typeof r.t==="number"?r.t:parseInput(String(r.t==null?"":r.t));
-      if(!(n>=1&&n<=99) || t==null || !(t>0&&t<7200)) return;
-      t=Math.round(t*100)/100;
-      let c=imClass||parseInt(r.c,10); if(!(c>=1&&c<=4)) c=null;
-      const dup=out.find(x=>x.c===c&&x.n===n);
-      if(dup){ if(dup.t!==t) dup.unsure=true; return; }
-      out.push({c:c,n:n,t:t,unsure:!!r.unsure,on:true});
-    });
-    return out.sort((a,b)=>(a.c||9)-(b.c||9)||a.n-b.n);
-  }
-  const IM_ERR={
-    not_granted:"Claudeの利用が許可されなかったので読み取れません。ページを開きなおすと、もう一度たずねられます。",
-    sampling_disabled:"このアカウントでは写真の読み取りが使えません。",
-    images_unavailable:"この画面では写真を送れません。",
-    image_rejected:"この写真は使えませんでした。JPEGかPNGで、もう一度撮りなおしてください。",
-    rate_limited:"利用が混み合っています。少し時間をおいてから、もう一度試してください。",
-    session_expired:"サインインが切れています。Claudeにサインインしなおしてください。",
-    refused:"この写真は読み取れませんでした。名簿だけが写るように撮りなおしてください。",
-    invalid_json:"うまく読み取れませんでした。もう一度「読み取る」を押してください。",
-    empty_completion:"うまく読み取れませんでした。名簿を大きく、まっすぐ撮りなおしてください。"
-  };
-
-  $("#imRun").onclick=async ()=>{
-    const files=Array.from($("#imFile").files||[]); if(!files.length||!sampleFn) return;
-    const ctl=imCtl=new AbortController();
-    imError(""); imShow("imBusy");
-    try{
-      const prep=await prepImages(files,(imgLimits&&imgLimits.maxCount)||1);
-      const data=await sampleFn.json(buildPrompt(prep.mode),{images:prep.blobs,signal:ctl.signal});
-      imRows=cleanRows(data);
-      if(!imRows.length){ imShow("imPick"); imError("記録を読み取れませんでした。名簿を大きく、まっすぐ撮りなおしてください。"); return; }
-      renderReview(); imShow("imReview");
-    }catch(e){
-      imShow("imPick");
-      if(e&&e.code==="cancelled") return;
-      imError(IM_ERR[e&&e.code]||"読み取りに失敗しました。通信の状態を確かめて、もう一度試してください。");
-    }finally{ if(imCtl===ctl) imCtl=null; }
-  };
-  $("#imStop").onclick=()=>{ if(imCtl) imCtl.abort(); };
-
-  function renderReview(){
-    const needClass=imRows.some(r=>r.c==null);
-    $("#imFix").hidden=!needClass;
-    let h="", nOn=0, nWarn=0;
-    imRows.forEach((r,i)=>{
-      const flags=[];
-      if(r.unsure) flags.push('<span class="flag">要確認</span>');
-      if(r.c!=null && r.n>(S.counts[r.c]||0)) flags.push('<span class="flag">人数外の番号</span>');
-      if(r.c!=null && !S.sample && findRec(r.c,r.n)) flags.push('<span class="flag ow">上書き</span>');
-      if(r.on) nOn++; if(r.unsure) nWarn++;
-      h+='<div class="imRow">'
-        +'<input type="checkbox" id="imc'+i+'" data-chk="'+i+'"'+(r.on?" checked":"")+' aria-label="'+r.n+'番を取り込む">'
-        +(r.c!=null?'<span class="cb cb'+r.c+'">'+r.c+'組</span>':'<span class="flag">?組</span>')
-        +'<span class="num">'+r.n+'番</span>'
-        +'<button class="imT tap num" data-edit="'+i+'">'+fmt(r.t)+'</button>'
-        +'<span>'+flags.join(" ")+'</span></div>';
-    });
-    $("#imList").innerHTML=h;
-    $("#imSummary").textContent=imRows.length+" 人分を読み取りました"+(nWarn?"（要確認 "+nWarn+" 件）":"")+"。紙と見くらべて、ちがうタイムはタップして直してください。";
-    $("#imApply").textContent="チェックした "+nOn+" 人分を記録に入れる";
-    $("#imApply").disabled=nOn===0;
-  }
-  function importSetTime(i,v){ if(imRows[i]){ imRows[i].t=v; imRows[i].unsure=false; renderReview(); } }
-  $("#imList").addEventListener("click",e=>{
-    const b=e.target.closest("[data-edit]"); if(!b) return;
-    const i=parseInt(b.dataset.edit,10), r=imRows[i];
-    openKeypad({kind:"import",i:i}, (r.c!=null?whoHtml(r.c,r.n):r.n+"番"), r.t);
-  });
-  $("#imList").addEventListener("change",e=>{
-    const c=e.target.closest("[data-chk]"); if(!c) return;
-    imRows[parseInt(c.dataset.chk,10)].on=c.checked; renderReview();
-  });
-  document.querySelectorAll("#imFixSeg button").forEach(b=>{
-    b.onclick=()=>{ const c=parseInt(b.dataset.c,10); imRows.forEach(r=>{ if(r.c==null) r.c=c; }); renderReview(); };
-  });
-  $("#imRetry").onclick=()=>{ imRows=[]; $("#imFile").value=""; $("#imRun").disabled=true; imError(""); imShow("imPick"); };
-  $("#imApply").onclick=()=>{
-    const rows=imRows.filter(r=>r.on);
-    if(!rows.length) return;
-    if(rows.some(r=>r.c==null)){ toast("クラスを選んでください"); return; }
-    if(S.sample) dropSample(); else snap();
-    rows.forEach(r=>{
-      S.results=S.results.filter(x=>!(x.c===r.c&&x.n===r.n));
-      S.results.push({c:r.c,n:r.n,t:r.t,g:null});
-    });
-    imRows=[]; $("#imFile").value=""; $("#imRun").disabled=true;
-    $("#importSheet").hidden=true; commit(); toast(rows.length+" 人分を記録に入れました");
-  };
+  $("#copyTimes").onclick=()=> copyText(matrix().body.map(r=>r[2]).join("\n"),"距離列");
 
   /* ---- 起動 ---- */
   load();
+  if(!S.laneCount) S.laneCount=S.race.r.length||8;
+  if(!S.minutes) S.minutes=5;
+  if(!S.lapLen) S.lapLen=200;
+  while(S.race.r.length<S.laneCount) S.race.r.push(null);
   if(!storageOK) $("#storageBar").hidden=false;
-  if(!S.race||!Array.isArray(S.race.f)) S.race={g:(S.race&&S.race.g)||1, f:[]};
-  if(!S.laneCount) S.laneCount=4;
   $("#setGrade").value=S.grade; $("#setEvent").value=S.event; $("#setDate").value=S.date;
-  [1,2,3,4].forEach(c=> $("#cnt"+c).value=S.counts[c]);
-  $("#setLaneCount").value=S.laneCount;
-  resetWatch();
-  /* まだ何も記録していないときは設定から始める。途中のときは計測画面に戻る */
-  showTab(S.sample||(!S.results.length&&!S.race.f.length) ? "setup" : "measure");
+  $("#setMinutes").value=S.minutes; $("#setLapLen").value=S.lapLen; $("#setLaneCount").value=S.laneCount;
+  [1,2,3,4].forEach(c=>{ $("#cnt"+c).value=S.counts[c]; });
+  /* 画面を再読み込みしても時計が続くよう、保存した開始時刻から復元する */
+  if(S.clk&&S.clk.t0){
+    t0=S.clk.t0;
+    if((clk()-t0)/1000>=total()){ frozen=total(); running=false; persistClk(); }
+    else { running=true; frozen=0; }
+  } else { frozen=(S.clk&&S.clk.fz)||0; }
+  render(); tick(); showTab("measure");
 
-  document.addEventListener("keydown",e=>{
-    if(!$("#keypad").hidden||!$("#picker").hidden||!$("#copySheet").hidden||!$("#laneSheet").hidden||!$("#importSheet").hidden) return;
-    if($("#tab-measure").hidden) return;
-    if(e.target && /INPUT|TEXTAREA|BUTTON/.test(e.target.tagName)) return;
-    if(e.code==="Space"&&!e.repeat){ e.preventDefault(); press(); }
+  document.addEventListener("keydown",(e)=>{
+    if(e.key==="Escape"){ closePicker(); closeKeypad(); closeLaneSheet(); }
   });
 })();
 </script>
