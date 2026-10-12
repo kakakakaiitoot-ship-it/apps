@@ -72,6 +72,7 @@
   .k-act.ghost { color: var(--ink); background: var(--card); box-shadow: 0 5px 0 var(--line); }
   .k-act.ghost:active { box-shadow: 0 1px 0 var(--line); }
   .k-act:disabled { opacity: .6; cursor: default; }
+  .k-credit { margin: 0; font-size: 12px; color: var(--sub); }
   .k-pending {
     padding: .5em 1em;
     font-size: clamp(14px, 2.6vw, 17px);
@@ -420,7 +421,7 @@
     <div id="history" class="hist"></div>
   </section>
 
-  <p class="credit">MP3への変換に <a href="https://github.com/shijinyu/lamejs" target="_blank" rel="noopener">lamejs</a>（LGPL-3.0）を使っています。</p>
+  <p class="credit">「鈴木先生のこえとーる」の引用<br>MP3への変換に <a href="https://github.com/shijinyu/lamejs" target="_blank" rel="noopener">lamejs</a>（LGPL-3.0）を使っています。</p>
 </div>
 
 <!-- ========== 子どもの録音画面（配布用URLを開いたとき） ========== -->
@@ -435,6 +436,7 @@
     <button id="kSave" class="k-act ghost" type="button">💾 たんまつに ほぞん</button>
   </div>
   <button id="kPending" class="k-pending" type="button" hidden></button>
+  <p class="k-credit">「鈴木先生のこえとーる」の引用</p>
 </div>
 
 <!-- Apps Script に貼るコード（設定画面の「コードをコピー」で使う） -->
