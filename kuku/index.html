@@ -37,12 +37,13 @@ button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:
 h1,h2,h3,p{margin:0}
 
 .app{max-width:1180px;margin:0 auto;padding:12px 18px 28px;padding-left:max(18px,env(safe-area-inset-left));padding-right:max(18px,env(safe-area-inset-right))}
-.top{display:flex;align-items:center;gap:12px;margin-bottom:12px;min-height:54px}
-.logo{font-size:26px;font-weight:800;letter-spacing:.06em;color:var(--navy);display:flex;align-items:center;gap:8px}
+.top{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px;min-height:54px}
+.logo{font-size:26px;font-weight:800;letter-spacing:.06em;color:var(--navy);display:flex;align-items:center;gap:8px;white-space:nowrap}
 .logo .mark{background:var(--navy);color:#fff;border-radius:12px;padding:0 10px;font-size:24px;letter-spacing:.02em}
 .sp{flex:1}
 .chip{border:2.5px solid var(--line);background:var(--card);border-radius:999px;padding:6px 18px;font-weight:800;font-size:17px;min-height:48px;white-space:nowrap}
 .chip:active{background:var(--lv0)}
+.back{font-size:15px;font-weight:800;color:var(--navy);text-decoration:none;border:2.5px solid var(--line);background:var(--card);border-radius:999px;padding:4px 12px;white-space:nowrap}
 
 .panel{background:var(--card);border:2.5px solid var(--line);border-radius:var(--radius);padding:16px 18px}
 .h{font-size:20px;font-weight:800;margin-bottom:10px}
@@ -202,6 +203,7 @@ h1,h2,h3,p{margin:0}
 <body>
 <div class="app">
   <header class="top">
+    <a class="back" id="lnkList" href="../">← 一覧</a>
     <button class="chip" id="btnBack" hidden>◀ もどる</button>
     <h1 class="logo"><span class="mark">九九</span>マスター</h1>
     <div class="sp"></div>
@@ -435,7 +437,7 @@ $('btnSound').onclick=()=>{ S.sound=!S.sound; save(); renderSound(); if(!S.sound
 /* ===== がめんの 切りかえ ===== */
 const SCREENS=['scHome','scDan','scLearn','scQuiz','scResult'];
 let cur='scHome', backDan=0, L=null, Q=null;
-function show(id){ SCREENS.forEach(s=>$(s).hidden=(s!==id)); cur=id; $('btnBack').hidden=(id==='scHome'); window.scrollTo(0,0); }
+function show(id){ SCREENS.forEach(s=>$(s).hidden=(s!==id)); cur=id; $('btnBack').hidden=(id==='scHome'); $('lnkList').hidden=(id!=='scHome'); window.scrollTo(0,0); }
 function setColor(a){ document.documentElement.style.setProperty('--c',COLORS[a||0]); }
 function stopAll(){ stopSpeak(); if(Q){ clearInterval(Q.clock); Q=null; } if(L){ clearTimeout(L.timer); L=null; } }
 function goBack(){ stopAll(); if(cur!=='scDan'&&backDan) openDan(backDan); else goHome(); }
