@@ -304,14 +304,14 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
       </label>
       <label class="lbl"><span>実施日</span><input id="setDate" class="field num" type="date"></label>
       <label class="lbl"><span>1回に走る人数（この人数ぶんゴールを押すと自動で止まります）</span>
-        <input id="setLaneCount" class="field num" type="number" min="1" max="100" step="1"></label>
+        <input id="setLaneCount" class="field num" type="number" min="1" max="160" step="1"></label>
       <div class="lbl">
         <span>各クラスの人数</span>
         <div class="row4">
-          <label class="lbl" style="text-align:center"><span><span class="cb cb1">1組</span></span><input id="cnt1" class="field num" style="text-align:center" type="number" min="0" max="45"></label>
-          <label class="lbl" style="text-align:center"><span><span class="cb cb2">2組</span></span><input id="cnt2" class="field num" style="text-align:center" type="number" min="0" max="45"></label>
-          <label class="lbl" style="text-align:center"><span><span class="cb cb3">3組</span></span><input id="cnt3" class="field num" style="text-align:center" type="number" min="0" max="45"></label>
-          <label class="lbl" style="text-align:center"><span><span class="cb cb4">4組</span></span><input id="cnt4" class="field num" style="text-align:center" type="number" min="0" max="45"></label>
+          <label class="lbl" style="text-align:center"><span><span class="cb cb1">1組</span></span><input id="cnt1" class="field num" style="text-align:center" type="number" min="0" max="40"></label>
+          <label class="lbl" style="text-align:center"><span><span class="cb cb2">2組</span></span><input id="cnt2" class="field num" style="text-align:center" type="number" min="0" max="40"></label>
+          <label class="lbl" style="text-align:center"><span><span class="cb cb3">3組</span></span><input id="cnt3" class="field num" style="text-align:center" type="number" min="0" max="40"></label>
+          <label class="lbl" style="text-align:center"><span><span class="cb cb4">4組</span></span><input id="cnt4" class="field num" style="text-align:center" type="number" min="0" max="40"></label>
         </div>
       </div>
       <button class="btn primary tap" id="startMeasure" style="width:100%;padding:16px;font-size:17px">この設定で計測をはじめる ▶</button>
@@ -832,11 +832,11 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
 
   function bind(id,fn){ const el=$(id); el.addEventListener("input",()=>{ fn(el.value); save(); render(); }); }
   bind("#setGrade",v=>S.grade=v); bind("#setEvent",v=>S.event=v); bind("#setDate",v=>S.date=v);
-  [1,2,3,4].forEach(c=> bind("#cnt"+c, v=>{ S.counts[c]=Math.min(45,Math.max(0,parseInt(v,10)||0)); }));
+  [1,2,3,4].forEach(c=> bind("#cnt"+c, v=>{ S.counts[c]=Math.min(40,Math.max(0,parseInt(v,10)||0)); }));
 
   $("#setLaneCount").addEventListener("input",()=>{
     const el=$("#setLaneCount");
-    const n=Math.min(100,Math.max(1,parseInt(el.value,10)||4));
+    const n=Math.min(160,Math.max(1,parseInt(el.value,10)||4));
     if(n<S.race.f.length){ toast("いまの組に "+S.race.f.length+" 人分のタイムがあるので減らせません"); el.value=S.laneCount; return; }
     S.laneCount=n; save(); render();
   });
