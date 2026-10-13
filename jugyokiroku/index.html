@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>自動タイムスタンプ授業記録アプリ</title>
+<!--
+  自動タイムスタンプ授業記録アプリ（自作版）
+  uta3y3uta さんの「自動タイムスタンプ授業記録アプリ」と同じ使い方ができるように、新しく書き起こしたもの。
+  JSON保存のファイルは、もとのアプリと同じ形（header と rows）なので、たがいに読み込める。
+  記録はこの端末のブラウザの中（IndexedDB）だけに保存する。外へは送らない。
+  Excel保存・PDF保存のときだけ、書き出し用の部品をインターネットから読み込む。
+-->
+<style>
+* { box-sizing: border-box; }
+body {
+  --bg: #FFF6E5; --panel: #FFFFFF; --line: #FFB74D; --text: #3E2723; --muted: #795548;
+  --main: #FF7043; --main-text: #FFFFFF; --sub: #FFB74D; --sub-text: #3E2723;
+  --head: #FFCC80; --focus: #FFFDE7; --bar: linear-gradient(135deg, #FFCC80, #FFB74D);
+  margin: 0; padding: 12px; background: var(--bg); color: var(--text);
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; font-size: 15px;
+}
+body[data-theme="dark"] { --bg:#121212; --panel:#1E1E1E; --line:#4A4A4A; --text:#E0E0E0; --muted:#9E9E9E; --main:#1976D2; --main-text:#fff; --sub:#424242; --sub-text:#E0E0E0; --head:#2D2D2D; --focus:#3A3A3A; --bar:linear-gradient(135deg,#1E1E1E,#2D2D2D); }
+body[data-theme="natural"] { --bg:#F5EFE0; --line:#A1887F; --muted:#6D4C41; --main:#8D6E63; --sub:#BCAAA4; --head:#BCAAA4; --focus:#FFF8E1; --bar:linear-gradient(135deg,#BCAAA4,#A1887F); }
+body[data-theme="pop"] { --bg:#FFE0F0; --line:#EC407A; --text:#4A148C; --muted:#7B1FA2; --main:#E91E63; --sub:#BA68C8; --sub-text:#fff; --head:#F8BBD0; --focus:#FFF3F8; --bar:linear-gradient(135deg,#F8BBD0,#F06292); }
+body[data-theme="simple"] { --bg:#FAFAFA; --line:#BDBDBD; --text:#212121; --muted:#616161; --main:#424242; --sub:#E0E0E0; --sub-text:#212121; --head:#EEEEEE; --focus:#F5F5F5; --bar:linear-gradient(135deg,#F5F5F5,#E0E0E0); }
+body[data-theme="classic"] { --bg:#EFEBE9; --line:#8D6E63; --muted:#5D4037; --main:#6D4C41; --sub:#D7CCC8; --head:#D7CCC8; --focus:#FFF8E1; --bar:linear-gradient(135deg,#D7CCC8,#A1887F); }
+body[data-theme="pastel"] { --bg:#F1F8E9; --line:#AED581; --text:#33691E; --muted:#558B2F; --main:#FF8A65; --sub:#DCEDC8; --sub-text:#33691E; --head:#DCEDC8; --focus:#FFFDE7; --bar:linear-gradient(135deg,#DCEDC8,#FFCCBC); }
+body[data-theme="ocean"] { --bg:#E1F5FE; --line:#4FC3F7; --text:#01579B; --muted:#0277BD; --main:#0288D1; --sub:#81D4FA; --sub-text:#01579B; --head:#B3E5FC; --focus:#F1FAFF; --bar:linear-gradient(135deg,#81D4FA,#29B6F6); }
+body[data-theme="forest"] { --bg:#E8F5E9; --line:#81C784; --text:#1B5E20; --muted:#2E7D32; --main:#2E7D32; --sub:#A5D6A7; --sub-text:#1B5E20; --head:#C8E6C9; --focus:#F4FBF4; --bar:linear-gradient(135deg,#A5D6A7,#66BB6A); }
+body[data-theme="mono"] { --bg:#FFFFFF; --line:#000000; --text:#000000; --muted:#444444; --main:#000000; --sub:#FFFFFF; --sub-text:#000000; --head:#E0E0E0; --focus:#F0F0F0; --bar:#FFFFFF; }
+
+.back { display: inline-block; margin: 0 0 8px; padding: 4px 12px; border: 1px solid var(--line); border-radius: 14px;
+  background: var(--panel); color: var(--text); text-decoration: none; font-size: 13px; }
+body.exporting .back { display: none; }
+@media print { .back { display: none; } }
+.header { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding: 12px 16px;
+  background: var(--bar); border: 1px solid var(--line); border-radius: 8px; font-weight: bold; }
+.header input { font: inherit; font-weight: normal; padding: 5px 8px; border: 1px solid var(--line);
+  border-radius: 4px; background: var(--panel); color: var(--text); }
+#hdr-lesson { width: 260px; max-width: 100%; }
+#hdr-class { width: 150px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+button { font: inherit; font-weight: bold; padding: 7px 14px; border-radius: 5px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--panel); color: var(--text); }
+button.primary { background: var(--main); color: var(--main-text); border-color: var(--main); }
+button.secondary { background: var(--sub); color: var(--sub-text); border-color: var(--sub); }
+button:hover { filter: brightness(0.95); }
+
+table { width: 100%; border-collapse: collapse; background: var(--panel); table-layout: fixed; }
+th, td { border: 1px solid var(--line); }
+th { background: var(--head); padding: 6px; }
+.col-time { width: 92px; } .col-sym { width: 62px; }
+td { padding: 0; vertical-align: top; }
+.cell-time, .cell-sym { width: 100%; border: 0; background: transparent; color: inherit; font: inherit;
+  text-align: center; padding: 7px 2px; }
+.cell-time { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+.rec-wrap { display: flex; align-items: flex-start; }
+.rec-main { flex: 1; min-width: 0; }
+.rec-text { min-height: 34px; padding: 7px 8px; outline: none; white-space: pre-wrap; word-break: break-word; }
+.rec-text:focus { background: var(--focus); }
+.rec-imgs { padding: 0 8px; }
+.rec-imgs:empty { display: none; }
+.btn-photo { margin: 5px; padding: 2px 8px; font-size: 12px; font-weight: normal; }
+.imgwrap { position: relative; display: inline-block; margin: 0 8px 8px 0; line-height: 0; }
+.imgwrap img { display: block; max-width: 100%; border: 1px solid var(--line); }
+.imgwrap .tool { position: absolute; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%;
+  color: #fff; font-size: 13px; line-height: 22px; text-align: center; opacity: 0.85; }
+.imgwrap .del { top: -8px; right: -8px; background: #D32F2F; }
+.imgwrap .edit { top: -8px; right: 18px; background: #2E7D32; }
+.imgwrap .grip { right: -8px; bottom: -8px; background: #2E7D32; cursor: nwse-resize; touch-action: none; }
+
+tr.sym-1 td { background: #FCE4EC; color: #1a1a1a; }
+tr.sym-2 td { background: #F48FB1; color: #1a1a1a; }
+tr.sym-3 td { background: #E1F5FE; color: #1a1a1a; }
+tr.sym-4 td { background: #81D4FA; color: #1a1a1a; }
+
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50;
+  align-items: flex-start; justify-content: center; padding: 30px 12px; overflow: auto; }
+.overlay.show { display: flex; }
+.modal { background: var(--panel); color: var(--text); border-radius: 8px; padding: 16px 18px; width: 100%; max-width: 640px; }
+.modal h3 { margin: 0 0 10px; display: flex; justify-content: space-between; align-items: center; }
+.modal h4 { margin: 16px 0 6px; border-left: 4px solid var(--main); padding-left: 8px; }
+.modal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+.note { color: var(--muted); font-size: 12px; margin: 4px 0 8px; }
+.theme-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.theme-grid button { padding: 6px 2px; font-size: 12px; font-weight: normal; }
+.theme-grid button.on { outline: 3px solid var(--main); }
+.swatch { display: block; height: 22px; border-radius: 3px; margin-bottom: 3px; border: 1px solid #0002; }
+.list { max-height: 260px; overflow: auto; border: 1px solid var(--line); border-radius: 4px; }
+.list .item { display: flex; gap: 8px; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.list .item:last-child { border-bottom: 0; }
+.list .item .label { flex: 1; min-width: 0; }
+.list .item button { padding: 3px 10px; font-size: 13px; }
+.badge { background: var(--main); color: var(--main-text); border-radius: 10px; padding: 1px 8px; font-size: 11px; margin-left: 6px; }
+#share-url { width: 100%; min-height: 110px; font-family: monospace; font-size: 12px; word-break: break-all; }
+#crop-stage { position: relative; display: inline-block; line-height: 0; user-select: none; touch-action: none; max-width: 100%; }
+#crop-img { max-width: 100%; max-height: 55vh; display: block; }
+#crop-box { position: absolute; border: 2px dashed #fff; box-shadow: 0 0 0 9999px rgba(0,0,0,0.45); cursor: move; }
+#crop-stage { overflow: hidden; }
+#crop-box i { position: absolute; width: 16px; height: 16px; background: #2E7D32; border: 2px solid #fff; border-radius: 50%; }
+#crop-box i[data-h="nw"] { left: -9px; top: -9px; cursor: nwse-resize; }
+#crop-box i[data-h="ne"] { right: -9px; top: -9px; cursor: nesw-resize; }
+#crop-box i[data-h="sw"] { left: -9px; bottom: -9px; cursor: nesw-resize; }
+#crop-box i[data-h="se"] { right: -9px; bottom: -9px; cursor: nwse-resize; }
+#toast { display: none; position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 60;
+  background: #323232; color: #fff; padding: 10px 16px; border-radius: 6px; max-width: 92vw; }
+#lock { z-index: 70; align-items: center; }
+
+body.exporting .toolbar, body.exporting .btn-photo, body.exporting .tool,
+body.exporting tr.empty, body.exporting #toast, body.exporting .overlay { display: none !important; }
+@media print {
+  body { background: #fff; padding: 0; }
+  .toolbar, .btn-photo, .tool, tr.empty, #toast, .overlay { display: none !important; }
+  .header { border: 1px solid #999; background: #fff; }
+  tr { break-inside: avoid; }
+  tr.sym-1 td, tr.sym-2 td, tr.sym-3 td, tr.sym-4 td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<a class="back" href="../">← 一覧</a>
+<div class="header">
+  <label>日付 <input type="date" id="hdr-date"></label>
+  <label>授業 <input type="text" id="hdr-lesson" placeholder="例：国語「ごんぎつね」"></label>
+  <label>学級 <input type="text" id="hdr-class" placeholder="例：4年1組"></label>
+</div>
+
+<div class="toolbar">
+  <button class="primary" id="btn-print">印刷</button>
+  <button class="primary" id="btn-excel">Excel保存</button>
+  <button class="primary" id="btn-pdf">PDF保存</button>
+  <button id="btn-json">JSON保存</button>
+  <button id="btn-json-in">JSON読込</button>
+  <button id="btn-share">URL発行</button>
+  <button class="secondary" id="btn-new">新規作成</button>
+  <button class="secondary" id="btn-history">履歴</button>
+  <input type="file" id="json-input" accept=".json,application/json" hidden>
+</div>
+
+<table>
+  <thead><tr><th class="col-time">時刻</th><th class="col-sym">記号</th><th>記録</th></tr></thead>
+  <tbody id="tbody"></tbody>
+</table>
+
+<div class="overlay" id="share-modal"><div class="modal">
+  <h3>共有URL発行 <button data-close>×</button></h3>
+  <p>この授業記録を開けるURLです。送った相手のブラウザで同じ記録を開けます。</p>
+  <p class="note">URLの中に記録の全文が入ります。子どもの名前を書いた記録のURLは、見られてよい相手にだけ送ってください。</p>
+  <textarea id="share-url" readonly></textarea>
+  <p class="note" id="share-note"></p>
+  <div class="actions"><button class="primary" id="btn-copy">URLをコピー</button><button data-close>閉じる</button></div>
+</div></div>
+
+<div class="overlay" id="crop-modal"><div class="modal" style="max-width:860px">
+  <h3>画像を編集（サイズ変更・トリミング） <button data-close>×</button></h3>
+  <div style="text-align:center"><div id="crop-stage"><img id="crop-img" alt=""><div id="crop-box">
+    <i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div></div></div>
+  <p><label>表示の幅 <input type="range" id="crop-size" min="40" max="800" step="2" style="width:60%;vertical-align:middle"> <span id="crop-size-val"></span></label></p>
+  <p class="note">点線の枠を動かすと、切り取る範囲を変えられます。「リセット」で元の画像に戻せます（ページを開き直すまで）。</p>
+  <div class="actions"><button id="crop-reset">リセット</button><button data-close>キャンセル</button><button class="primary" id="crop-apply">適用</button></div>
+</div></div>
+
+<div class="overlay" id="history-modal"><div class="modal">
+  <h3>履歴 / テーマ設定 <button data-close>×</button></h3>
+  <h4>テーマ</h4>
+  <div class="theme-grid" id="theme-grid"></div>
+  <h4>変更履歴</h4>
+  <button id="btn-versions">変更履歴を表示</button>
+  <p class="note">3分ごとに、変わったときだけ自動で版を残します（最大30件。古い版から消えます）。選ぶとその版に戻せます。</p>
+  <div class="list" id="version-list" style="display:none"></div>
+  <h4>保存された授業記録</h4>
+  <p class="note">入力は、この端末のブラウザに自動で保存されます。ブラウザの閲覧データを消すと記録も消えるので、大切な記録はPDF・Excel・JSONでも残してください。</p>
+  <div class="list" id="history-list"></div>
+  <div class="actions"><button data-close>閉じる</button></div>
+</div></div>
+
+<div class="overlay" id="lock"><div class="modal" style="max-width:420px;text-align:center">
+  <p><b>べつのタブで このアプリが開かれました。</b></p>
+  <p class="note">上書きの事故を防ぐため、このタブは止めています。ここまでの入力は保存済みです。</p>
+  <button class="primary" onclick="location.reload()">このタブで続ける</button>
+</div></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+const DB_NAME = 'jugyoKirokuJisaku', LS_STATE = 'jugyoKiroku_state', LS_JOURNAL = 'jugyoKiroku_journal';
+const FIRST_ROWS = 20, ADD_ROWS = 10, MAX_ROWS = 500;
+const IMG_MAX_EDGE = 900, IMG_QUALITY = 0.6;
+const VERSION_MAX = 30, VERSION_EVERY_MS = 3 * 60 * 1000;
+const SYMBOLS = ['', '◯', '⬤', '☆', '★'];
+const SYM_CLASS = { '◯': 'sym-1', '⬤': 'sym-2', '●': 'sym-2', '☆': 'sym-3', '★': 'sym-4' };
+const SYM_HEX = { '◯': 'FCE4EC', '⬤': 'F48FB1', '●': 'F48FB1', '☆': 'E1F5FE', '★': '81D4FA' };
+const THEMES = [['bright', 'ブライト', '#FFCC80,#FF7043'], ['dark', 'ダーク', '#424242,#1E1E1E'], ['natural', 'ナチュラル', '#BCAAA4,#8D6E63'],
+  ['pop', 'ポップ', '#F8BBD0,#E91E63'], ['simple', 'シンプル', '#FAFAFA,#BDBDBD'], ['classic', 'クラシック', '#D7CCC8,#6D4C41'],
+  ['pastel', 'パステル', '#DCEDC8,#FFCCBC'], ['ocean', 'オーシャン', '#81D4FA,#0288D1'], ['forest', 'フォレスト', '#A5D6A7,#2E7D32'], ['mono', 'モノクロ', '#FFFFFF,#000000']];
+const LIB_EXCEL = 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
+const LIB_PDF = 'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js';
+
+const $ = id => document.getElementById(id);
+const state = { cur: null, entries: {}, theme: 'bright' };
+let db = null, locked = false, saveTimer = null;
+const dirty = new Set();
+const originals = new WeakMap();   // 画像の「リセット」用（開いている間だけ）
+
+/* ---------- 小さな道具 ---------- */
+const pad = n => String(n).padStart(2, '0');
+function today() { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function nowTime() { const d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); }
+function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function newRow() { return { time: '', symbol: '', text: '', images: [], timestamped: false }; }
+function newEntry() {
+  return { id: newId(), savedAt: new Date().toISOString(),
+    header: { date: today(), lesson: '', class: '', dateUserSet: false }, rows: Array.from({ length: FIRST_ROWS }, newRow) };
+}
+const cur = () => state.entries[state.cur];
+const rowEmpty = r => !r.time && !r.symbol && !(r.text || '').trim() && !(r.images || []).length;
+function entryEmpty(e) { const h = e.header; return !(h.lesson || '').trim() && !(h.class || '').trim() && e.rows.every(rowEmpty); }
+/* 読み込んだデータ（もとのアプリのJSONもふくむ）を、このアプリの形にそろえる */
+function tidyEntry(e) {
+  const h = e.header || {};
+  e.header = { date: h.date || today(), lesson: h.lesson || '', class: h.class || '', dateUserSet: h.dateUserSet !== false };
+  e.rows = (Array.isArray(e.rows) ? e.rows : []).slice(0, MAX_ROWS).map(r => ({
+    time: String(r.time || ''), symbol: SYMBOLS.includes(r.symbol) ? r.symbol : (r.symbol === '●' ? '⬤' : ''),
+    text: String(r.text || ''), timestamped: !!(r.timestamped || r.time),
+    images: (r.images || []).map(i => typeof i === 'string' ? { src: i, width: 220 } : { src: i.src, width: Number(i.width) || 220 })
+      .filter(i => typeof i.src === 'string' && i.src.startsWith('data:image/'))
+  }));
+  while (e.rows.length < FIRST_ROWS) e.rows.push(newRow());
+  return e;
+}
+function exportShape(e) {
+  return { header: e.header, rows: e.rows.map(r => ({ time: r.time, symbol: r.symbol, text: r.text, timestamped: r.timestamped,
+    images: r.images.map(i => ({ src: i.src, width: i.width })) })) };
+}
+let toastTimer = null;
+function toast(msg, ms) {
+  const t = $('toast'); t.textContent = msg; t.style.display = 'block';
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.style.display = 'none'; }, ms || 4000);
+}
+function download(blob, name) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function fileBase() {
+  const h = cur().header;
+  return ['授業記録', h.date || 'no-date', h.lesson || 'no-lesson', h.class].filter(Boolean).join('_').replace(/[\\/:*?"<>|]/g, '');
+}
+const loaded = {};
+function loadScript(url) {
+  return loaded[url] || (loaded[url] = new Promise((ok, ng) => {
+    const s = document.createElement('script'); s.src = url; s.onload = ok;
+    s.onerror = () => { delete loaded[url]; s.remove(); ng(new Error('読み込めませんでした')); };
+    document.head.appendChild(s);
+  }));
+}
+
+/* ---------- 保存（IndexedDB。使えないときは localStorage） ---------- */
+function openDb() {
+  return new Promise((ok, ng) => {
+    const r = indexedDB.open(DB_NAME, 1);
+    r.onupgradeneeded = () => {
+      r.result.createObjectStore('entries', { keyPath: 'id' });
+      r.result.createObjectStore('meta');
+      r.result.createObjectStore('versions', { keyPath: 'vid', autoIncrement: true });
+    };
+    r.onsuccess = () => ok(r.result); r.onerror = () => ng(r.error);
+  });
+}
+function idb(store, mode, fn) {
+  return new Promise((ok, ng) => {
+    const t = db.transaction(store, mode); const req = fn(t.objectStore(store));
+    t.oncomplete = () => ok(req ? req.result : undefined); t.onerror = t.onabort = () => ng(t.error);
+  });
+}
+/* 入力のたびに、文字だけの控えをすぐ残す（本保存の前にブラウザが閉じても戻せるように） */
+function writeJournal() {
+  const e = cur(); if (!e) return;
+  try {
+    localStorage.setItem(LS_JOURNAL, JSON.stringify({ id: e.id, savedAt: e.savedAt, header: e.header,
+      rows: e.rows.map(r => ({ time: r.time, symbol: r.symbol, text: r.text, timestamped: r.timestamped })) }));
+  } catch (err) { /* 控えが取れなくても本保存は続ける */ }
+}
+function changed() {
+  if (locked) return;
+  const e = cur(); e.savedAt = new Date().toISOString(); dirty.add(e.id);
+  writeJournal();
+  clearTimeout(saveTimer); saveTimer = setTimeout(flush, 300);
+}
+async function flush() {
+  clearTimeout(saveTimer);
+  if (locked) return;
+  try {
+    if (db) {
+      const ids = [...dirty]; dirty.clear();
+      for (const id of ids) if (state.entries[id]) await idb('entries', 'readwrite', s => s.put(state.entries[id]));
+      await idb('meta', 'readwrite', s => s.put({ cur: state.cur, theme: state.theme }, 'app'));
+    } else {
+      localStorage.setItem(LS_STATE, JSON.stringify(state)); dirty.clear();
+    }
+  } catch (err) {
+    toast('保存できませんでした（容量がいっぱいかもしれません）。Excel・PDF・JSONで記録を取り出してください。', 8000);
+  }
+}
+async function loadState() {
+  try {
+    db = await openDb();
+    const list = await idb('entries', 'readonly', s => s.getAll());
+    list.forEach(e => { state.entries[e.id] = tidyEntry(e); });
+    const meta = await idb('meta', 'readonly', s => s.get('app'));
+    if (meta) { state.cur = meta.cur; state.theme = meta.theme || 'bright'; }
+  } catch (err) {
+    db = null;
+    try {
+      const s = JSON.parse(localStorage.getItem(LS_STATE) || 'null');
+      if (s) { Object.assign(state, s); Object.values(state.entries).forEach(tidyEntry); }
+    } catch (e2) { /* こわれていたら新しく始める */ }
+  }
+  // 控えのほうが新しければ、そこから文字を戻す
+  try {
+    const j = JSON.parse(localStorage.getItem(LS_JOURNAL) || 'null');
+    if (j && j.id) {
+      const e = state.entries[j.id];
+      if (!e) { state.entries[j.id] = tidyEntry({ id: j.id, savedAt: j.savedAt, header: j.header, rows: j.rows }); dirty.add(j.id); }
+      else if (j.savedAt > e.savedAt) {
+        e.header = j.header; e.savedAt = j.savedAt;
+        j.rows.forEach((r, i) => { e.rows[i] = Object.assign(e.rows[i] || newRow(), r); });
+        tidyEntry(e); dirty.add(e.id);
+      }
+      if (!state.cur) state.cur = j.id;
+    }
+  } catch (err) { /* 控えが読めなくても続ける */ }
+  if (!state.entries[state.cur]) { const e = newEntry(); state.entries[e.id] = e; state.cur = e.id; }
+  // 何も書かずに終わった記録は残さない
+  for (const e of Object.values(state.entries)) {
+    if (e.id === state.cur || !entryEmpty(e)) continue;
+    delete state.entries[e.id];
+    if (db) await idb('entries', 'readwrite', s => s.delete(e.id)).catch(() => {});
+  }
+  const h = cur().header;
+  if (!h.dateUserSet) h.date = today();
+}
+
+/* ---------- 画面：見出し ---------- */
+function renderHeader() {
+  const h = cur().header;
+  $('hdr-date').value = h.date; $('hdr-lesson').value = h.lesson; $('hdr-class').value = h.class;
+}
+function bindHeader() {
+  $('hdr-date').addEventListener('input', e => { cur().header.date = e.target.value; cur().header.dateUserSet = true; changed(); });
+  $('hdr-lesson').addEventListener('input', e => { cur().header.lesson = e.target.value; changed(); });
+  $('hdr-class').addEventListener('input', e => { cur().header.class = e.target.value; changed(); });
+}
+
+/* ---------- 画面：表 ---------- */
+function stamp(row, timeInput) {
+  if (row.timestamped) return;
+  if (!(row.text || '').trim() && !row.images.length) return;
+  row.time = nowTime(); row.timestamped = true; timeInput.value = row.time;
+}
+/* 下の空き行が3行より少なくなったら、10行ふやす */
+function keepSpareRows() {
+  const rows = cur().rows;
+  if (rows.slice(-3).every(rowEmpty)) return;
+  for (let i = 0; i < ADD_ROWS && rows.length < MAX_ROWS; i++) { const r = newRow(); rows.push(r); $('tbody').appendChild(buildRow(r)); }
+}
+function colorRow(tr, row) { tr.className = SYM_CLASS[row.symbol] || ''; }
+function renderTable() {
+  const tb = $('tbody'); tb.textContent = '';
+  cur().rows.forEach(r => tb.appendChild(buildRow(r)));
+}
+function focusRow(i) {
+  const rows = cur().rows;
+  if (i >= rows.length && rows.length < MAX_ROWS) { const r = newRow(); rows.push(r); $('tbody').appendChild(buildRow(r)); }
+  const tr = $('tbody').children[Math.max(0, Math.min(i, rows.length - 1))];
+  if (tr) tr.querySelector('.rec-text').focus();
+}
+function buildRow(row) {
+  const tr = document.createElement('tr'); colorRow(tr, row);
+  const index = () => cur().rows.indexOf(row);
+
+  const tdT = tr.insertCell(); tdT.className = 'col-time';
+  const time = document.createElement('input');
+  time.className = 'cell-time'; time.value = row.time; time.placeholder = '--:--:--'; time.setAttribute('aria-label', '時刻');
+  time.addEventListener('input', () => { row.time = time.value; if (time.value) row.timestamped = true; changed(); });
+  tdT.appendChild(time);
+
+  const tdS = tr.insertCell(); tdS.className = 'col-sym';
+  const sel = document.createElement('select'); sel.className = 'cell-sym'; sel.setAttribute('aria-label', '記号');
+  SYMBOLS.forEach(s => sel.add(new Option(s || '—', s)));
+  sel.add(new Option('挿入', '+')); sel.add(new Option('削除', '-'));
+  sel.value = row.symbol;
+  sel.addEventListener('change', () => {
+    const i = index();
+    if (sel.value === '+') {
+      sel.value = row.symbol;
+      if (cur().rows.length >= MAX_ROWS) return toast('行は' + MAX_ROWS + '行までです。');
+      cur().rows.splice(i, 0, newRow()); changed(); renderTable(); focusRow(i); return;
+    }
+    if (sel.value === '-') {
+      sel.value = row.symbol;
+      if (!confirm('この行を削除します。よろしいですか？')) return;
+      cur().rows.splice(i, 1); if (!cur().rows.length) cur().rows.push(newRow());
+      changed(); renderTable(); return;
+    }
+    row.symbol = sel.value; colorRow(tr, row); changed();
+  });
+  tdS.appendChild(sel);
+
+  const tdR = tr.insertCell();
+  const wrap = document.createElement('div'); wrap.className = 'rec-wrap';
+  const main = document.createElement('div'); main.className = 'rec-main';
+  const text = document.createElement('div'); text.className = 'rec-text'; text.spellcheck = false; text.setAttribute('aria-label', '記録');
+  text.contentEditable = 'plaintext-only';
+  if (text.contentEditable !== 'plaintext-only') text.contentEditable = 'true';
+  text.textContent = row.text;
+  text.addEventListener('input', () => { row.text = text.innerText.replace(/\n$/, ''); stamp(row, time); keepSpareRows(); changed(); });
+  text.addEventListener('keydown', e => {
+    if (e.isComposing || e.keyCode === 229) return;          // かな漢字変換の確定のEnterでは動かさない
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); focusRow(index() + 1); }
+    else if (e.key === 'Tab') { e.preventDefault(); focusRow(index() + (e.shiftKey ? -1 : 1)); }
+  });
+  const imgs = document.createElement('div'); imgs.className = 'rec-imgs';
+  const addFiles = files => files.forEach(f => addImage(f, row, imgs, time));
+  text.addEventListener('paste', e => {
+    const cd = e.clipboardData; if (!cd) return;
+    const pics = [...cd.items].filter(it => it.type.startsWith('image/')).map(it => it.getAsFile()).filter(Boolean);
+    e.preventDefault();
+    if (pics.length) return addFiles(pics);
+    document.execCommand('insertText', false, cd.getData('text/plain'));
+  });
+  row.images.forEach(item => imgs.appendChild(buildImage(item, row, imgs)));
+  main.append(text, imgs);
+  const photo = document.createElement('button'); photo.className = 'btn-photo'; photo.textContent = '画像'; photo.title = '画像を追加';
+  photo.addEventListener('click', () => {
+    const fi = document.createElement('input'); fi.type = 'file'; fi.accept = 'image/*'; fi.multiple = true;
+    fi.addEventListener('change', () => addFiles([...fi.files])); fi.click();
+  });
+  wrap.append(main, photo); tdR.appendChild(wrap);
+  return tr;
+}
+
+/* ---------- 画像 ---------- */
+function readAsDataURL(file) {
+  return new Promise((ok, ng) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = ng; r.readAsDataURL(file); });
+}
+function loadImage(src) {
+  return new Promise((ok, ng) => { const im = new Image(); im.onload = () => ok(im); im.onerror = ng; im.src = src; });
+}
+/* 長辺900px・JPEGにちぢめる（写真をたくさん貼っても保存がいっぱいにならないように） */
+async function shrink(dataUrl) {
+  try {
+    const im = await loadImage(dataUrl);
+    const k = Math.min(1, IMG_MAX_EDGE / Math.max(im.naturalWidth, im.naturalHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(im, 0, 0, c.width, c.height);
+    const out = c.toDataURL('image/jpeg', IMG_QUALITY);
+    return { src: out.length < dataUrl.length ? out : dataUrl, w: c.width };
+  } catch (err) { return { src: dataUrl, w: 220 }; }
+}
+async function addImage(file, row, box, timeInput) {
+  const s = await shrink(await readAsDataURL(file));
+  const item = { src: s.src, width: Math.min(220, s.w) };
+  row.images.push(item); box.appendChild(buildImage(item, row, box));
+  stamp(row, timeInput); keepSpareRows(); changed();
+}
+function buildImage(item, row, box) {
+  const w = document.createElement('span'); w.className = 'imgwrap';
+  const im = document.createElement('img'); im.src = item.src; im.style.width = item.width + 'px'; im.alt = '貼った画像';
+  const mk = (cls, label, title) => { const b = document.createElement('button'); b.className = 'tool ' + cls; b.textContent = label; b.title = title; return b; };
+  const del = mk('del', '×', '画像を消す'), edit = mk('edit', '✎', 'サイズ変更・トリミング'), grip = mk('grip', '⇲', 'ドラッグで大きさを変える');
+  del.addEventListener('click', () => {
+    if (!confirm('この画像を消します。よろしいですか？')) return;
+    row.images.splice(row.images.indexOf(item), 1); w.remove(); changed();
+  });
+  edit.addEventListener('click', () => openCrop(item, im));
+  grip.addEventListener('pointerdown', e => {
+    e.preventDefault(); grip.setPointerCapture(e.pointerId);
+    const x0 = e.clientX, w0 = im.getBoundingClientRect().width;
+    const move = ev => { item.width = Math.round(Math.max(40, Math.min(1200, w0 + ev.clientX - x0))); im.style.width = item.width + 'px'; };
+    const up = () => { grip.removeEventListener('pointermove', move); grip.removeEventListener('pointerup', up); changed(); };
+    grip.addEventListener('pointermove', move); grip.addEventListener('pointerup', up);
+  });
+  w.append(im, edit, del, grip);
+  return w;
+}
+const crop = { item: null, el: null, x: 0, y: 0, w: 0, h: 0 };
+function drawCropBox() {
+  const b = $('crop-box').style; b.left = crop.x + 'px'; b.top = crop.y + 'px'; b.width = crop.w + 'px'; b.height = crop.h + 'px';
+}
+function resetCropBox() {
+  const im = $('crop-img'); crop.x = 0; crop.y = 0; crop.w = im.clientWidth; crop.h = im.clientHeight; drawCropBox();
+}
+function openCrop(item, el) {
+  crop.item = item; crop.el = el;
+  const im = $('crop-img'); im.onload = resetCropBox; im.src = item.src;
+  $('crop-size').value = item.width; $('crop-size-val').textContent = item.width + 'px';
+  $('crop-modal').classList.add('show');
+  if (im.complete) resetCropBox();
+}
+function bindCrop() {
+  const stage = $('crop-stage'), img = $('crop-img');
+  stage.addEventListener('pointerdown', e => {
+    const h = e.target.dataset.h, onBox = e.target.id === 'crop-box';
+    if (!h && !onBox) return;
+    e.preventDefault(); stage.setPointerCapture(e.pointerId);
+    const s = { x: e.clientX, y: e.clientY, c: { x: crop.x, y: crop.y, w: crop.w, h: crop.h } }, W = img.clientWidth, H = img.clientHeight, MIN = 20;
+    const move = ev => {
+      const dx = ev.clientX - s.x, dy = ev.clientY - s.y; let { x, y, w, h: hh } = s.c;
+      if (!h) { x = Math.max(0, Math.min(W - w, x + dx)); y = Math.max(0, Math.min(H - hh, y + dy)); }
+      else {
+        let l = x, t = y, r = x + w, b = y + hh;
+        if (h.includes('w')) l = Math.max(0, Math.min(r - MIN, l + dx)); else r = Math.min(W, Math.max(l + MIN, r + dx));
+        if (h.includes('n')) t = Math.max(0, Math.min(b - MIN, t + dy)); else b = Math.min(H, Math.max(t + MIN, b + dy));
+        x = l; y = t; w = r - l; hh = b - t;
+      }
+      Object.assign(crop, { x, y, w, h: hh }); drawCropBox();
+    };
+    const up = () => { stage.removeEventListener('pointermove', move); stage.removeEventListener('pointerup', up); };
+    stage.addEventListener('pointermove', move); stage.addEventListener('pointerup', up);
+  });
+  $('crop-size').addEventListener('input', e => { $('crop-size-val').textContent = e.target.value + 'px'; });
+  $('crop-reset').addEventListener('click', () => {
+    const o = originals.get(crop.item);
+    if (o) { crop.item.src = o; $('crop-img').src = o; } else resetCropBox();
+  });
+  $('crop-apply').addEventListener('click', () => {
+    const item = crop.item, k = img.naturalWidth / img.clientWidth;
+    const whole = crop.x < 1 && crop.y < 1 && crop.w > img.clientWidth - 2 && crop.h > img.clientHeight - 2;
+    if (!whole) {
+      if (!originals.has(item)) originals.set(item, item.src);
+      const c = document.createElement('canvas'); c.width = Math.round(crop.w * k); c.height = Math.round(crop.h * k);
+      const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+      g.drawImage(img, crop.x * k, crop.y * k, crop.w * k, crop.h * k, 0, 0, c.width, c.height);
+      item.src = c.toDataURL('image/jpeg', 0.85);
+    } else item.src = img.src.startsWith('data:') ? img.src : item.src;
+    item.width = Number($('crop-size').value);
+    crop.el.src = item.src; crop.el.style.width = item.width + 'px';
+    $('crop-modal').classList.remove('show'); changed();
+  });
+}
+
+/* ---------- 書き出し ---------- */
+function markEmpty(on) {
+  [...$('tbody').children].forEach((tr, i) => tr.classList.toggle('empty', on && rowEmpty(cur().rows[i])));
+}
+function doPrint() { markEmpty(true); window.print(); }
+async function exportExcel() {
+  try { await loadScript(LIB_EXCEL); } catch (err) { return alert('Excelの書き出しに必要な部品を読み込めませんでした。インターネットにつないでから、もう一度おしてください。'); }
+  const e = cur(), wb = new ExcelJS.Workbook(), ws = wb.addWorksheet('授業記録');
+  const border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+  ws.columns = [{ width: 11 }, { width: 6 }, { width: 70 }];
+  ws.addRow(['日付', e.header.date, '授業名', e.header.lesson, 'クラス', e.header.class]);
+  ws.addRow([]);
+  ws.addRow(['時刻', '記号', '記録']).eachCell(c => {
+    c.font = { bold: true }; c.border = border; c.alignment = { horizontal: 'center', vertical: 'middle' };
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F0F0' } };
+  });
+  const COL_PX = 480, MAX_PX = 540;
+  for (const row of e.rows.filter(r => !rowEmpty(r))) {
+    const xr = ws.addRow([row.time, row.symbol, row.text]);
+    ['A', 'B', 'C'].forEach(col => {
+      const c = ws.getCell(col + xr.number); c.border = border;
+      c.alignment = { vertical: 'top', wrapText: true, horizontal: col === 'B' ? 'center' : 'left' };
+      c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + (SYM_HEX[row.symbol] || 'FFFFFF') } };
+    });
+    const lines = row.text ? row.text.split('\n').reduce((n, l) => n + Math.max(1, Math.ceil(l.length / 38)), 0) : 0;
+    const textPx = lines * 18 + 8;
+    const pics = [];
+    for (const item of row.images) {
+      try {
+        const im = await loadImage(item.src), w = Math.min(item.width, COL_PX);
+        pics.push({ item, w, h: w * im.naturalHeight / im.naturalWidth });
+      } catch (err) { /* 読めない画像はとばす */ }
+    }
+    let picPx = pics.reduce((n, p) => n + p.h + 6, 0);
+    if (textPx + picPx > MAX_PX && picPx > 0) {
+      const k = Math.max(0.1, (MAX_PX - textPx) / picPx);
+      pics.forEach(p => { p.w *= k; p.h *= k; }); picPx = pics.reduce((n, p) => n + p.h + 6, 0);
+    }
+    const total = Math.max(24, textPx + picPx);
+    xr.height = total * 0.75;
+    let y = textPx;
+    for (const p of pics) {
+      const ext = (p.item.src.match(/^data:image\/(png|gif|jpeg)/) || [0, 'jpeg'])[1];
+      const id = wb.addImage({ base64: p.item.src, extension: ext });
+      ws.addImage(id, { tl: { col: 2.03, row: xr.number - 1 + y / total }, ext: { width: p.w, height: p.h } });
+      y += p.h + 6;
+    }
+  }
+  const buf = await wb.xlsx.writeBuffer();
+  download(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fileBase() + '.xlsx');
+}
+async function exportPDF() {
+  try { await loadScript(LIB_PDF); } catch (err) { return alert('PDFの書き出しに必要な部品を読み込めませんでした。「印刷」をおして、送信先を「PDFに保存」にしても同じものが作れます。'); }
+  document.body.classList.add('exporting'); markEmpty(true);
+  const done = () => { document.body.classList.remove('exporting'); markEmpty(false); };
+  html2pdf().set({ margin: 6, filename: fileBase() + '.pdf', image: { type: 'jpeg', quality: 0.95 },
+    html2canvas: { scale: 2, backgroundColor: '#ffffff' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+    pagebreak: { mode: ['avoid-all', 'css'] } }).from(document.body).save().then(done, err => { done(); alert('PDFを作れませんでした：' + err.message); });
+}
+function exportJSON() { download(new Blob([JSON.stringify(exportShape(cur()), null, 2)], { type: 'application/json' }), fileBase() + '.json'); }
+function addAndOpen(data) {
+  if (!data || !data.header || !Array.isArray(data.rows)) throw new Error('授業記録のデータではありません');
+  const e = tidyEntry({ id: newId(), savedAt: new Date().toISOString(), header: data.header, rows: data.rows });
+  state.entries[e.id] = e; state.cur = e.id; changed(); renderHeader(); renderTable();
+}
+function importJSON(ev) {
+  const file = ev.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try { addAndOpen(JSON.parse(r.result)); toast('読み込みました。履歴に追加しています。'); }
+    catch (err) { alert('読み込めませんでした：' + err.message); }
+    ev.target.value = '';
+  };
+  r.readAsText(file);
+}
+
+/* ---------- 共有URL（記録をちぢめて # のうしろに入れる。もとのアプリと同じ書き方） ---------- */
+const b64u = {
+  enc: bytes => { let s = ''; bytes.forEach(b => { s += String.fromCharCode(b); }); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); },
+  dec: str => Uint8Array.from(atob(str.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))
+};
+async function pipe(bytes, stream) { return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer()); }
+async function issueShareURL() {
+  const raw = new TextEncoder().encode(JSON.stringify(exportShape(cur())));
+  let code;
+  try { code = 'gz.' + b64u.enc(await pipe(raw, new CompressionStream('gzip'))); } catch (err) { code = 'pl.' + b64u.enc(raw); }
+  const url = location.origin + location.pathname + location.search + '#share=' + code;
+  $('share-url').value = url;
+  const n = url.length, note = $('share-note');
+  note.textContent = 'URLの長さ：約 ' + n.toLocaleString() + ' 文字' +
+    (n > 30000 ? '（とても長いです。メールなどでは送れないことがあります。画像が多いときは「JSON保存」のファイルを渡してください）'
+      : n > 8000 ? '（やや長めです。送り先によっては切れることがあります）' : '');
+  note.style.color = n > 30000 ? '#c00' : n > 8000 ? '#c80' : '';
+  $('share-modal').classList.add('show'); $('share-url').select();
+}
+async function openShared() {
+  const m = location.hash.match(/#share=(gz|pl)\.([^&]+)/); if (!m) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  try {
+    let bytes = b64u.dec(m[2]);
+    if (m[1] === 'gz') bytes = await pipe(bytes, new DecompressionStream('gzip'));
+    const data = JSON.parse(new TextDecoder().decode(bytes));
+    if (confirm('共有された授業記録を、履歴に追加して表示します。よろしいですか？')) addAndOpen(data);
+  } catch (err) { alert('共有URLを読み込めませんでした：' + err.message); }
+}
+
+/* ---------- 履歴・テーマ・変更履歴 ---------- */
+function applyTheme() { document.body.dataset.theme = state.theme; }
+function renderThemes() {
+  const g = $('theme-grid'); g.textContent = '';
+  THEMES.forEach(([id, name, colors]) => {
+    const b = document.createElement('button'); b.classList.toggle('on', id === state.theme);
+    const sw = document.createElement('span'); sw.className = 'swatch'; sw.style.background = 'linear-gradient(135deg,' + colors + ')';
+    b.append(sw, name);
+    b.addEventListener('click', () => { state.theme = id; applyTheme(); renderThemes(); dirty.add(state.cur); flush(); });
+    g.appendChild(b);
+  });
+}
+function entryLabel(e) {
+  const h = e.header, n = e.rows.filter(r => !rowEmpty(r)).length;
+  return [h.date, h.lesson || '（授業名なし）', h.class].filter(Boolean).join('　') + '　' + n + '行';
+}
+function listItem(label, buttons, badge) {
+  const d = document.createElement('div'); d.className = 'item';
+  const l = document.createElement('span'); l.className = 'label'; l.textContent = label;
+  if (badge) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = badge; l.appendChild(b); }
+  d.appendChild(l);
+  buttons.forEach(([text, fn]) => { const b = document.createElement('button'); b.textContent = text; b.addEventListener('click', fn); d.appendChild(b); });
+  return d;
+}
+function renderHistory() {
+  const box = $('history-list'); box.textContent = '';
+  Object.values(state.entries).filter(e => e.id === state.cur || !entryEmpty(e))
+    .sort((a, b) => (b.id === state.cur) - (a.id === state.cur) || (a.savedAt < b.savedAt ? 1 : -1))
+    .forEach(e => {
+      const isCur = e.id === state.cur;
+      box.appendChild(listItem(entryLabel(e), [
+        ['開く', () => { switchTo(e.id); $('history-modal').classList.remove('show'); }],
+        ['削除', () => deleteEntry(e.id)]], isCur ? '編集中' : ''));
+    });
+}
+async function switchTo(id) {
+  await flush(); state.cur = id; dirty.add(id); writeJournal(); await flush(); renderHeader(); renderTable();
+}
+async function deleteEntry(id) {
+  if (!confirm('この授業記録を削除します。元に戻せません。よろしいですか？')) return;
+  delete state.entries[id]; dirty.delete(id);
+  if (db) await idb('entries', 'readwrite', s => s.delete(id));
+  if (id === state.cur) { const e = newEntry(); state.entries[e.id] = e; state.cur = e.id; renderHeader(); renderTable(); changed(); }
+  await flush(); renderHistory();
+}
+function newRecord() {
+  if (entryEmpty(cur())) return toast('いまの記録は、まだ空です。');
+  if (!confirm('新しい記録を作ります。いまの記録は「履歴」に残ります。よろしいですか？')) return;
+  flush().then(() => {
+    const e = newEntry(); state.entries[e.id] = e; state.cur = e.id; changed(); renderHeader(); renderTable(); window.scrollTo(0, 0);
+  });
+}
+let lastSnap = '';
+async function snapshot() {
+  if (!db || locked || entryEmpty(cur())) return;
+  const data = JSON.stringify(exportShape(cur()));
+  if (data === lastSnap) return;
+  try {
+    await idb('versions', 'readwrite', s => s.add({ entryId: state.cur, at: new Date().toISOString(), label: entryLabel(cur()), data }));
+    lastSnap = data;
+    const keys = await idb('versions', 'readonly', s => s.getAllKeys());
+    for (const k of keys.slice(0, Math.max(0, keys.length - VERSION_MAX))) await idb('versions', 'readwrite', s => s.delete(k));
+  } catch (err) { /* 版が残せなくても本保存は続いている */ }
+}
+async function renderVersions() {
+  const box = $('version-list'); box.textContent = '';
+  if (!db) { box.textContent = 'このブラウザでは変更履歴を使えません。'; return; }
+  const list = (await idb('versions', 'readonly', s => s.getAll())).reverse();
+  if (!list.length) { box.appendChild(listItem('まだ版がありません。', [])); return; }
+  list.forEach(v => {
+    const t = new Date(v.at), when = (t.getMonth() + 1) + '/' + t.getDate() + ' ' + pad(t.getHours()) + ':' + pad(t.getMinutes());
+    box.appendChild(listItem(when + '　' + v.label, [['この版に戻す', () => {
+      if (!confirm('この版を復元しますか？　いまの内容は、この版の内容に置きかわります。')) return;
+      const d = JSON.parse(v.data), id = state.entries[v.entryId] ? v.entryId : newId();
+      state.entries[id] = tidyEntry({ id, savedAt: new Date().toISOString(), header: d.header, rows: d.rows });
+      state.cur = id; changed(); renderHeader(); renderTable(); $('history-modal').classList.remove('show');
+    }]]));
+  });
+}
+
+/* ---------- 2つのタブで開いたときの上書き事故を防ぐ ---------- */
+function watchTabs() {
+  if (!('BroadcastChannel' in window)) return;
+  const ch = new BroadcastChannel(DB_NAME);
+  ch.onmessage = async () => { await flush(); locked = true; $('lock').classList.add('show'); };
+  ch.postMessage('opened');
+}
+
+/* ---------- はじまり ---------- */
+async function init() {
+  await loadState();
+  applyTheme(); bindHeader(); bindCrop(); renderHeader(); renderTable();
+  $('btn-print').addEventListener('click', doPrint);
+  window.addEventListener('afterprint', () => markEmpty(false));
+  $('btn-excel').addEventListener('click', exportExcel);
+  $('btn-pdf').addEventListener('click', exportPDF);
+  $('btn-json').addEventListener('click', exportJSON);
+  $('btn-json-in').addEventListener('click', () => $('json-input').click());
+  $('json-input').addEventListener('change', importJSON);
+  $('btn-share').addEventListener('click', issueShareURL);
+  $('btn-copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText($('share-url').value); } catch (err) { $('share-url').select(); document.execCommand('copy'); }
+    toast('URLをコピーしました。');
+  });
+  $('btn-new').addEventListener('click', newRecord);
+  $('btn-history').addEventListener('click', () => {
+    renderThemes(); renderHistory(); $('version-list').style.display = 'none'; $('btn-versions').textContent = '変更履歴を表示';
+    $('history-modal').classList.add('show');
+  });
+  $('btn-versions').addEventListener('click', async () => {
+    const box = $('version-list'), open = box.style.display === 'none';
+    if (open) await renderVersions();
+    box.style.display = open ? '' : 'none'; $('btn-versions').textContent = open ? '変更履歴を隠す' : '変更履歴を表示';
+  });
+  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('.overlay').classList.remove('show')));
+  document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
+  window.addEventListener('pagehide', flush);
+  setInterval(snapshot, VERSION_EVERY_MS);
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  watchTabs();
+  await flush();
+  await openShared();
+}
+init();
+</script>
+</body>
+</html>
