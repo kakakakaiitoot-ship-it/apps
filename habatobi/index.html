@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>はばとびカードメーカー</title>
+<style>
+  :root{
+    --ink:#1b2a3a; --line:#1b2a3a; --sub:#5b6b7b; --accent:#1565c0; --pale:#e8f1fb; --yellow:#fff7d6;
+    --u:calc(100cqw/192); --p:calc(100cqw/192*.3528);
+    --ui-bg:#f2f5f8; --ui-card:#fff; --ui-border:#cfd8e1;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:"Hiragino Maru Gothic ProN","BIZ UDPGothic","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;color:var(--ink);background:var(--ui-bg)}
+  .app{display:flex;height:100vh}
+
+  /* ---------- 設定パネル（画面だけ） ---------- */
+  .panel{width:360px;flex:none;overflow:auto;background:var(--ui-card);border-right:1px solid var(--ui-border);padding:16px 16px 28px}
+  .back{display:inline-block;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none;border:1.5px solid var(--ui-border);background:#fff;border-radius:999px;padding:3px 12px;margin-bottom:10px;white-space:nowrap}
+  .panel h1{font-size:19px;margin:0 0 2px}
+  .panel .lead{font-size:12.5px;color:var(--sub);margin:0 0 14px;line-height:1.6}
+  .panel h2{font-size:13.5px;margin:18px 0 6px;padding-left:8px;border-left:4px solid var(--accent)}
+  .panel label{font-size:13px}
+  .panel textarea{width:100%;height:190px;font:14px/1.6 ui-monospace,Menlo,monospace;padding:8px;border:1px solid var(--ui-border);border-radius:6px;resize:vertical}
+  .panel input[type=text],.panel input[type=number],.panel select{font-size:14px;padding:5px 6px;border:1px solid var(--ui-border);border-radius:6px}
+  .panel input[type=number]{width:74px}
+  .row{display:flex;align-items:center;gap:8px;margin:6px 0;flex-wrap:wrap}
+  .hint{font-size:12px;color:var(--sub);line-height:1.6;margin:4px 0}
+  .formula{background:var(--pale);border-radius:8px;padding:8px 10px;font-size:13px;line-height:1.9}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  button{font:inherit;font-size:13px;padding:7px 12px;border-radius:8px;border:1px solid var(--ui-border);background:#fff;cursor:pointer}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;font-size:15px;padding:10px 18px}
+  .status{font-size:13px;margin-top:8px;line-height:1.6}
+  .status .warn{color:#b3261e}
+  details{margin-top:10px;font-size:12.5px;color:var(--sub);line-height:1.7}
+
+  /* ---------- プレビュー ----------
+     カードの中の大きさは全部「カードのはば÷192」（--u＝1mmぶん）で決める。
+     ブラウザが印刷で拡大・縮小しても、はば192：高さ258の形のまま1ページに入る。 */
+  .preview{flex:1;overflow:auto;padding:20px}
+  .sheet{width:100%;max-width:210mm;margin:0 auto 20px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.18);padding:6% 4.3% 7%}
+  .inner{container-type:inline-size;position:relative;width:100%;aspect-ratio:192/258}
+  .card{position:absolute;inset:0;display:flex;flex-direction:column;gap:calc(2.2*var(--u));overflow:hidden;font-size:calc(10.5*var(--p));line-height:1.5}
+  .sheet.list .inner{aspect-ratio:auto}
+  .sheet.list .card{position:static;display:block;overflow:visible}
+
+  /* ---------- カード ---------- */
+  ruby rt{font-size:.5em;font-weight:400}
+  body.noruby rt{display:none}
+  .head{display:flex;align-items:flex-end;gap:calc(5*var(--u))}
+  .title{font-size:calc(20*var(--p));font-weight:800;letter-spacing:.04em;line-height:1.35;white-space:nowrap}
+  .title small{font-size:calc(11*var(--p));font-weight:700;margin-left:calc(3*var(--u))}
+  .who{flex:1;display:flex;justify-content:flex-end;align-items:flex-end;gap:calc(2*var(--u));font-size:calc(11*var(--p));white-space:nowrap}
+  .who .u{display:inline-block;border-bottom:1.2px solid var(--line);min-width:calc(11*var(--u));text-align:center;font-weight:700;padding:0 calc(1*var(--u))}
+  .who .u.name{min-width:calc(52*var(--u));font-size:calc(13*var(--p))}
+  .sec{border:1.4px solid var(--line);border-radius:calc(3*var(--u));padding:calc(1.6*var(--u)) calc(3*var(--u)) calc(2.2*var(--u))}
+  .sec>h3{margin:0 0 calc(1*var(--u));font-size:calc(11.5*var(--p));display:flex;align-items:center;gap:calc(2*var(--u));white-space:nowrap}
+  .sec>h3 .no{display:inline-flex;align-items:center;justify-content:center;width:calc(6*var(--u));height:calc(6*var(--u));border-radius:50%;background:var(--ink);color:#fff;font-size:calc(10*var(--p));flex:none}
+  .sec>h3 .note{font-size:calc(8.5*var(--p));font-weight:400;color:var(--sub)}
+
+  .goal{display:flex;align-items:stretch;gap:calc(2*var(--u))}
+  .goal .box{flex:1;border:1.2px solid var(--line);border-radius:calc(2*var(--u));text-align:center;padding:calc(.8*var(--u)) calc(1.5*var(--u)) calc(1*var(--u));position:relative}
+  .goal .box .cap{font-size:calc(8.5*var(--p));color:var(--sub);display:block}
+  .goal .box .val{font-size:calc(14*var(--p));font-weight:800;line-height:1.45;display:block;min-height:calc(8.5*var(--u));white-space:nowrap}
+  .goal .box .val small{font-size:calc(8.5*var(--p));font-weight:700}
+  .goal .box.t{flex:.8}
+  .goal .box.pale{background:var(--pale)}
+  .goal .box.mine{border-width:2.2px;background:var(--yellow)}
+  .goal .box .unit{position:absolute;right:calc(2*var(--u));bottom:calc(1.2*var(--u));font-size:calc(9.5*var(--p));font-weight:700}
+  .goal .arrow{align-self:center;font-size:calc(14*var(--p));font-weight:800}
+  .goal .gap{width:calc(2*var(--u))}
+  .calc{font-size:calc(8.5*var(--p));margin-top:calc(1*var(--u));color:var(--sub)}
+  .calc .blank{display:inline-block;border-bottom:1px solid var(--line);min-width:calc(13*var(--u));height:calc(4.5*var(--u));vertical-align:bottom}
+
+  table{border-collapse:collapse;width:100%}
+  .score{margin-top:calc(1.6*var(--u));table-layout:fixed}
+  .score td,.score th{border:1px solid var(--line);padding:calc(.2*var(--u)) calc(1*var(--u));font-size:calc(9.3*var(--p));text-align:center;line-height:1.5}
+  .score th{background:var(--pale);font-weight:800}
+  .score th.lab{width:calc(25*var(--u));font-size:calc(8.5*var(--p));background:#fff;font-weight:700}
+  .score td{font-weight:700}
+  .score .mid{background:var(--yellow)}
+
+  .points{display:grid;grid-template-columns:repeat(4,1fr);gap:calc(2*var(--u));margin-top:calc(.6*var(--u))}
+  .pt{border:1px solid var(--line);border-radius:calc(2*var(--u));padding:calc(.8*var(--u)) calc(2*var(--u)) calc(1.2*var(--u));font-size:calc(9.3*var(--p));line-height:1.5}
+  .pt b{display:block;font-size:calc(10.5*var(--p))}
+  .pt b .n{display:inline-flex;align-items:center;justify-content:center;width:calc(5*var(--u));height:calc(5*var(--u));border-radius:50%;border:1.3px solid var(--line);font-size:calc(9*var(--p));margin-right:calc(1*var(--u))}
+  .diagram{width:100%;height:calc(16*var(--u));display:block}
+
+  .rec{table-layout:fixed}
+  .rec th,.rec td{border:1px solid var(--line);text-align:center;font-size:calc(9.5*var(--p));padding:0 calc(1*var(--u))}
+  .rec th{background:var(--pale);font-weight:700;line-height:1.3;padding:calc(.6*var(--u)) 0;font-size:calc(8.5*var(--p));white-space:nowrap}
+  .rec td{height:calc(7.6*var(--u))}
+  .rec.tight td{height:calc(6.5*var(--u))}
+  .rec.tight7 td{height:calc(5.6*var(--u))}
+  .rec td.no{font-size:calc(12*var(--p));font-weight:800;background:var(--pale)}
+  .rec td.unit{font-size:calc(8*var(--p));color:var(--sub);text-align:right;vertical-align:bottom;padding:0 calc(1*var(--u)) calc(.5*var(--u))}
+  .rec td.best{background:var(--yellow)}
+  .rec td.pick{font-size:calc(11*var(--p));letter-spacing:.42em;color:var(--sub)}
+  .rec td.fr{text-align:left;vertical-align:top;font-size:calc(8*var(--p));color:var(--sub);padding:calc(.5*var(--u)) calc(1.5*var(--u))}
+  .rec td.fr .mk{float:right;font-size:calc(9.5*var(--p));letter-spacing:.3em;color:var(--ink)}
+  .rec tr.b td{border-bottom-width:1.6px}
+
+  .bottom{flex:1;display:flex;gap:calc(2.4*var(--u));min-height:0}
+  .bottom .sec{display:flex;flex-direction:column;min-height:0}
+  .bottom .gwrap{flex:0 0 calc(86*var(--u))}
+  .bottom .rwrap{flex:1}
+  .graph{flex:1;width:100%;min-height:0}
+  .lines{flex:1;display:flex;flex-direction:column;min-height:0}
+  .lines i{flex:1;border-bottom:1px dashed #8a97a4;min-height:calc(4*var(--u))}
+  .lines .q{font-size:calc(9.3*var(--p));margin-top:calc(1*var(--u))}
+
+  .list h3{font-size:calc(15*var(--p));margin:0 0 calc(3*var(--u))}
+  .list p{font-size:calc(9.5*var(--p));margin:0 0 calc(3*var(--u));color:var(--sub)}
+  .list table th,.list table td{border:1px solid var(--line);padding:calc(1*var(--u)) calc(1*var(--u));font-size:calc(9*var(--p));text-align:center;white-space:nowrap}
+  .list table th{background:var(--pale)}
+  .list table td.l{text-align:left}
+  .list tr{break-inside:avoid}
+
+  @media print{
+    @page{size:A4 portrait;margin:8mm 9mm}
+    html,body{height:auto}
+    body{background:#fff}
+    .app{display:block;height:auto}
+    .panel{display:none}
+    .preview{padding:0;overflow:visible}
+    .sheet{width:auto;max-width:none;margin:0;padding:0;box-shadow:none;break-after:page;break-inside:avoid;page-break-after:always;page-break-inside:avoid}
+    .sheet.list{break-inside:auto;page-break-inside:auto}
+    .sheet:last-child{break-after:auto;page-break-after:auto}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+  @media (max-width:900px){
+    .app{display:block;height:auto}
+    .panel{width:auto;border-right:0;border-bottom:1px solid var(--ui-border)}
+    .preview{padding:10px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <a class="back" href="../">← 一覧</a>
+    <h1>はばとびカードメーカー</h1>
+    <p class="lead">50m走のタイムから「めやすの記録」を出し、自分でめあてを決めて、毎回の記録とふりかえりを書ける学習カード（A4）を作ります。3年生から使えます。</p>
+
+    <h2>① 名前と50m走のタイム</h2>
+    <textarea id="roster" placeholder="1行に1人。Excelの表をそのまま貼れます。&#10;&#10;1　山田 たろう　9.8&#10;2　鈴木 はな　10.42&#10;佐藤 けん　9秒5"></textarea>
+    <p class="hint">「番号　名前　タイム」または「名前　タイム」。タイムを入れなければ、めやすも手書きのカードになります。</p>
+    <div class="btns">
+      <button id="sample">見本を入れる</button>
+      <button id="clear">入力を消す</button>
+    </div>
+    <div class="status" id="status"></div>
+
+    <h2>② カードの設定</h2>
+    <div class="row"><label>学年
+      <select id="grade">
+        <option value="low">3・4年（はばとび）</option>
+        <option value="high">5・6年（走りはばとび）</option>
+      </select></label></div>
+    <div class="row"><label>学年・組 <input type="text" id="klass" size="10" placeholder="3年1組"></label></div>
+    <div class="row"><label>学習の回数 <input type="number" id="lessons" min="3" max="7" value="5"> 回</label></div>
+    <div class="row"><label><input type="checkbox" id="ruby" checked> ふりがなをつける</label></div>
+    <div class="row"><label><input type="checkbox" id="score" checked> 得点表をのせる</label></div>
+    <div class="row"><label><input type="checkbox" id="list" checked> 先生用の一覧表もつける</label></div>
+    <div class="row"><label>手書き用（タイム空らん）を <input type="number" id="blanks" min="0" max="45" value="0"> 枚たす</label></div>
+
+    <h2>③ めやすの記録の出し方</h2>
+    <div class="formula">
+      めやす(cm) ＝ <input type="number" id="base" value="550" step="5"> − タイム ×
+      <input type="number" id="coef" value="30" step="1"><br>
+      得点のきざみ <input type="number" id="step" value="10" min="2" max="30"> cm
+    </div>
+    <p class="hint">例：9.8秒 → <b id="ex"></b>。はじめの記録をとってみて、めやすが高すぎる・低すぎるときは左の数字（550）を変えてください。10下げると全員のめやすが10cm下がります。</p>
+
+    <div class="btns"><button class="primary" id="print">印刷する（PDFに保存も）</button></div>
+    <p class="hint">印刷の設定は「A4・縦・倍率100%」。色のわくが出ないときは「背景のグラフィック」に✓を入れてください。</p>
+
+    <details>
+      <summary>式のもとと、データのあつかい</summary>
+      初期値の「550 − タイム × 30」と5段階の得点は、元小学校教員・石ころマメ生さんのnote記事「走り幅跳びの学習で＜使える＞基準記録の『計算式』」（5年生以上向け）の方法です。3・4年生での確かめはされていない数字なので、カードでは「めやす」として見せ、めあては子どもが自分の「はじめの記録」から決める形にしています。<br>
+      入力した名前とタイムは、このパソコンのブラウザの中にだけ保存され、外には送られません。「入力を消す」で消えます。
+    </details>
+  </aside>
+  <main class="preview" id="preview"></main>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var KEY='habatobi-card-v2';
+  var $=function(id){return document.getElementById(id);};
+  var ids=['roster','grade','klass','lessons','ruby','score','list','blanks','base','coef','step'];
+  var SAMPLE='1\tあおき ゆう\t9.8\n2\tいのうえ さら\t10.42\n3\tうえだ けん\t9.1\n4\tえんどう みお\t11.3\n5\tおおた りく\t9秒5';
+
+  // 学年ごとの言葉（3・4年＝短い助走から。5・6年＝リズミカルな助走から）
+  var GRADE={
+    low:{title:'はばとび',pts:[
+      ['{助走|じょそう}','5〜7{歩|ほ}で、リズムよく{走|はし}る。'],
+      ['ふみ{切|き}り','ふみ{切|き}る{足|あし}をきめて、{強|つよ}く「トン！」'],
+      ['{空中|くうちゅう}','ひざを{高|たか}く{上|あ}げて、{前|まえ}の{遠|とお}くを{見|み}る。'],
+      ['{着地|ちゃくち}','{両足|りょうあし}で、ひざをやわらかくまげる。']]},
+    high:{title:'{走|はし}りはばとび',pts:[
+      ['{助走|じょそう}','7〜9{歩|ほ}でリズムよく。だんだんスピードを{上|あ}げる。'],
+      ['ふみ{切|き}り','ゾーンの{中|なか}で、{足|あし}のうら{全体|ぜんたい}で{強|つよ}く「トン！」'],
+      ['{空中|くうちゅう}','ひざを{胸|むね}に{引|ひ}きつける。{目|め}は{前|まえ}の{上|うえ}のほうへ。'],
+      ['{着地|ちゃくち}','{両足|りょうあし}をそろえて、ひざをやわらかくまげる。']]}
+  };
+
+  // {漢字|よみ} をふりがなに
+  function R(s){return s.replace(/\{([^|}]+)\|([^}]+)\}/g,'<ruby>$1<rt>$2</rt></ruby>');}
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function num(id,def,min,max){var v=parseFloat($(id).value);if(!isFinite(v))v=def;return Math.min(max,Math.max(min,v));}
+  function mcm(cm){var m=Math.floor(cm/100),c=cm%100;return m>0?m+'m'+(c<10?'0':'')+c+'cm':c+'cm';}
+  function fmtTime(t){return (Math.round(t*100)/100).toString().replace(/^(\d+)$/,'$1.0');}
+
+  function parseRoster(text){
+    var kids=[],bad=[];
+    text.split(/\r?\n/).forEach(function(raw){
+      var line=raw.normalize('NFKC').trim();
+      if(!line)return;
+      line=line.replace(/(\d+)\s*秒\s*(\d+)/g,'$1.$2').replace(/秒/g,'');
+      var tk=line.split(/[\t,、]+|\s+/).filter(Boolean);
+      var t=parseFloat(tk[tk.length-1]);
+      if(!/^\d+(\.\d+)?$/.test(tk[tk.length-1])||t<5||t>20){bad.push(raw.trim());return;}
+      tk.pop();
+      var no='';
+      if(tk.length&&/^\d{1,2}$/.test(tk[0]))no=tk.shift();
+      kids.push({no:no,name:tk.join(' '),time:t});
+    });
+    return{kids:kids,bad:bad};
+  }
+
+  function target(t,o){return Math.max(0,Math.round(o.base-t*o.coef));}
+  // 得点ごとの記録のはんい（めやす T、きざみ s）。1点→5点の順
+  function bands(T,s){
+    return[
+      {p:1,lo:null,hi:T-2*s},
+      {p:2,lo:T-2*s+1,hi:T-s},
+      {p:3,lo:T-s+1,hi:T},
+      {p:4,lo:T+1,hi:T+s},
+      {p:5,lo:T+s+1,hi:null}
+    ];
+  }
+  function bandText(b){
+    if(b.hi===null)return b.lo+'cm〜';
+    if(b.lo===null)return '〜'+b.hi+'cm';
+    return b.lo+'〜'+b.hi+'cm';
+  }
+  function bandTextBlank(p,s){
+    return[null,'−'+(2*s)+'cmより{下|した}','−'+(2*s-1)+'〜−'+s+'cm','−'+(s-1)+'cm〜めやす','＋1〜＋'+s+'cm','＋'+(s+1)+'cm{以上|いじょう}'][p];
+  }
+
+  var DIAGRAM='<svg class="diagram" viewBox="0 0 640 80" preserveAspectRatio="xMidYMid meet" aria-hidden="true">'
+    +'<rect x="392" y="56" width="240" height="12" fill="#f6ecd2" stroke="#1b2a3a" stroke-width="1.2"/>'
+    +'<rect x="362" y="56" width="30" height="7" fill="#1565c0"/>'
+    +'<line x1="8" y1="56" x2="392" y2="56" stroke="#1b2a3a" stroke-width="1.6"/>'
+    +'<path d="M30 48 H330" stroke="#1b2a3a" stroke-width="1.4" stroke-dasharray="14 8" fill="none"/>'
+    +'<path d="M330 48 l-9 -5 v10 z" fill="#1b2a3a"/>'
+    +'<path d="M377 54 Q470 -22 585 54" stroke="#1565c0" stroke-width="2.2" stroke-dasharray="6 5" fill="none"/>'
+    +'<g font-size="13" font-weight="700" text-anchor="middle" fill="#1b2a3a">'
+    +'<circle cx="170" cy="28" r="10" fill="#fff" stroke="#1b2a3a" stroke-width="1.4"/><text x="170" y="33">1</text>'
+    +'<circle cx="377" cy="30" r="10" fill="#fff" stroke="#1b2a3a" stroke-width="1.4"/><text x="377" y="35">2</text>'
+    +'<circle cx="478" cy="12" r="10" fill="#fff" stroke="#1b2a3a" stroke-width="1.4"/><text x="478" y="17">3</text>'
+    +'<circle cx="585" cy="36" r="10" fill="#fff" stroke="#1b2a3a" stroke-width="1.4"/><text x="585" y="41">4</text>'
+    +'</g>'
+    +'<g font-size="11" fill="#5b6b7b" text-anchor="middle"><text x="377" y="79">ふみ切るところ</text><text x="512" y="79">すな場</text></g>'
+    +'</svg>';
+
+  function graph(T,n){
+    // たて：めやす±50cm、よこ：はじめ＋1〜n回
+    var W=330,H=230,L=44,Rr=8,Tp=8,B=22,ph=H-Tp-B,pw=W-L-Rr,s='',cols=n+1;
+    for(var i=0;i<=10;i++){
+      var y=Tp+ph*i/10,d=50-i*10,mid=(d===0);
+      s+='<line x1="'+L+'" y1="'+y+'" x2="'+(W-Rr)+'" y2="'+y+'" stroke="'+(mid?'#1565c0':'#9aa7b4')+'" stroke-width="'+(mid?2:0.7)+'"/>';
+      var lab=T===null?(mid?'めやす':''):String(T+d);
+      s+='<text x="'+(L-5)+'" y="'+(y+4)+'" font-size="'+(T===null?10:11)+'" text-anchor="end" fill="'+(mid?'#1565c0':'#1b2a3a')+'" font-weight="'+(mid?800:400)+'">'+lab+'</text>';
+    }
+    for(var k=0;k<cols;k++){
+      var x=L+pw*(k+0.5)/cols;
+      s+='<line x1="'+x+'" y1="'+Tp+'" x2="'+x+'" y2="'+(Tp+ph)+'" stroke="#9aa7b4" stroke-width="0.7" stroke-dasharray="2 3"/>';
+      s+='<text x="'+x+'" y="'+(H-6)+'" font-size="10.5" text-anchor="middle" fill="#1b2a3a">'+(k===0?'はじめ':k+'回')+'</text>';
+    }
+    s+='<rect x="'+L+'" y="'+Tp+'" width="'+pw+'" height="'+ph+'" fill="none" stroke="#1b2a3a" stroke-width="1.3"/>';
+    if(T!==null)s+='<text x="'+(W-Rr-4)+'" y="'+(Tp+ph/2-4)+'" font-size="10.5" text-anchor="end" fill="#1565c0" font-weight="800">めやす</text>';
+    return'<svg class="graph" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+s+'</svg>';
+  }
+
+  function card(kid,o){
+    var blank=!kid, T=blank?null:target(kid.time,o), G=GRADE[o.grade], h='', i;
+    h+='<div class="head"><div class="title">'+R(G.title)+'<small>'+R('{学習|がくしゅう}カード')+'</small></div>'
+      +'<div class="who">'+(o.klass?'<span class="u">'+esc(o.klass)+'</span>':'<span class="u"></span>'+R('{年|ねん}')+'<span class="u"></span>'+R('{組|くみ}'))
+      +'<span class="u">'+(blank?'':esc(kid.no))+'</span>'+R('{番|ばん}')
+      +'　'+R('{名前|なまえ}')+'<span class="u name">'+(blank?'':esc(kid.name))+'</span></div></div>';
+
+    // 1 めあてをきめよう（めやす → はじめの記録 → わたしのめあて）
+    h+='<div class="sec"><h3><span class="no">1</span>'+R('めあてをきめよう')
+      +'<span class="note">'+R('「めやす」と「はじめの{記録|きろく}」を{見|み}て、{自分|じぶん}のめあてを{書|か}こう')+'</span></h3>'
+      +'<div class="goal">'
+      +'<div class="box t"><span class="cap">'+R('50m{走|そう}のタイム')+'</span><span class="val">'+(blank?'':fmtTime(kid.time))+'</span><span class="unit">'+R('{秒|びょう}')+'</span></div>'
+      +'<div class="arrow">→</div>'
+      +'<div class="box pale"><span class="cap">'+R('めやすの{記録|きろく}')+'</span><span class="val">'+(blank?'':T+'cm <small>('+mcm(T)+')</small>')+'</span>'+(blank?'<span class="unit">cm</span>':'')+'</div>'
+      +'<div class="gap"></div>'
+      +'<div class="box"><span class="cap">'+R('はじめの{記録|きろく}')+'</span><span class="val"></span><span class="unit">cm</span></div>'
+      +'<div class="arrow">→</div>'
+      +'<div class="box mine"><span class="cap">'+R('わたしのめあて')+'</span><span class="val"></span><span class="unit">cm</span></div>'
+      +'</div>';
+    if(o.grade==='high'){
+      h+='<div class="calc">'+R('めやすの{計算|けいさん}：')+o.base+' − '+(blank?'<span class="blank"></span>':fmtTime(kid.time))+' × '+o.coef+' ＝ '+(blank?'<span class="blank"></span> ':T)+'cm</div>';
+    }
+    if(o.score){
+      var bs=blank?null:bands(T,o.step),r1='',r2='';
+      for(i=1;i<=5;i++){
+        r1+='<th'+(i===3?' class="mid"':'')+'>'+i+R('{点|てん}')+'</th>';
+        r2+='<td'+(i===3?' class="mid"':'')+'>'+R(blank?bandTextBlank(i,o.step):bandText(bs[i-1]))+'</td>';
+      }
+      h+='<table class="score"><tr><th class="lab" rowspan="2">'+R('{得点表|とくてんひょう}')+'<br>'+R(blank?'（めやすとくらべて）':'（いちばんよい{記録|きろく}で）')+'</th>'+r1+'</tr><tr>'+r2+'</tr></table>';
+    }
+    h+='</div>';
+
+    // 2 ポイント
+    h+='<div class="sec"><h3><span class="no">2</span>'+R('{遠|とお}くへとぶための4つのポイント')+'</h3>'+DIAGRAM+'<div class="points">';
+    G.pts.forEach(function(p,ix){h+='<div class="pt"><b><span class="n">'+(ix+1)+'</span>'+R(p[0])+'</b>'+R(p[1])+'</div>';});
+    h+='</div></div>';
+
+    // 3 毎回の記録とふりかえり
+    h+='<div class="sec"><h3><span class="no">3</span>'+R('{記録|きろく}とふりかえり')
+      +'<span class="note">'+R('はじめに「がんばること」の{番号|ばんごう}に○ → とんだら、ふりかえりを{書|か}こう')+'</span></h3>'
+      +'<table class="rec'+(o.lessons>6?' tight7':o.lessons>5?' tight':'')+'"><tr><th style="width:calc(8*var(--u))">'+R('{回|かい}')+'</th><th style="width:calc(17*var(--u))">'+R('{月|がつ}／{日|にち}')+'</th><th style="width:calc(33*var(--u))">'+R('がんばること')+'</th>'
+      +'<th>'+R('1{回目|かいめ}')+'</th><th>'+R('2{回目|かいめ}')+'</th><th>'+R('3{回目|かいめ}')+'</th><th>'+R('いちばんよい{記録|きろく}')+'</th>'
+      +(o.score?'<th style="width:calc(15*var(--u))">'+R('{得点|とくてん}')+'</th>':'')+'</tr>';
+    for(i=1;i<=o.lessons;i++){
+      h+='<tr><td class="no" rowspan="2">'+i+'</td><td>／</td><td class="pick">1 2 3 4</td><td class="unit">cm</td><td class="unit">cm</td><td class="unit">cm</td><td class="unit best">cm</td>'
+        +(o.score?'<td class="unit">'+R('{点|てん}')+'</td>':'')+'</tr>'
+        +'<tr class="b"><td class="fr" colspan="'+(o.score?7:6)+'">ふりかえり<span class="mk">'+R('できた ◎ ○ △')+'</span></td></tr>';
+    }
+    h+='</table></div>';
+
+    // 4 グラフ ＋ 5 学習をおえて
+    h+='<div class="bottom"><div class="sec gwrap"><h3><span class="no">4</span>'+R('{記録|きろく}グラフ')+'<span class="note">'+R('(cm)　めあてに{赤|あか}い{線|せん}を{引|ひ}こう')+'</span></h3>'+graph(T,o.lessons)+'</div>'
+      +'<div class="sec rwrap"><h3><span class="no">5</span>'+R('{学習|がくしゅう}をおえて')+'</h3><div class="lines">'
+      +'<div class="q">'+R('◆ {記録|きろく}がのびたのは、どんなことをがんばったとき？')+'</div><i></i><i></i>'
+      +(o.lessons<=5?'<div class="q">'+R('◆ {次|つぎ}にがんばりたいこと')+'</div><i></i><i></i>':'')
+      +'</div></div></div>';
+    return'<section class="sheet"><div class="inner"><div class="card">'+h+'</div></div></section>';
+  }
+
+  function listSheet(kids,o){
+    var h='<section class="sheet list"><div class="inner"><div class="card"><h3>'+(o.grade==='low'?'はばとび':'走りはばとび')+'　めやすの記録 一覧'+(o.klass?'（'+esc(o.klass)+'）':'')+'</h3>'
+      +'<p>めやす(cm) ＝ '+o.base+' − 50m走のタイム × '+o.coef+'（四捨五入）／得点のきざみ '+o.step+'cm　※数字はその得点になる記録(cm)</p>'
+      +'<table><tr><th>番号</th><th>名前</th><th>50m走</th><th>めやす</th><th>1点</th><th>2点</th><th>3点</th><th>4点</th><th>5点</th><th>はじめの記録</th><th>めあて</th></tr>';
+    kids.forEach(function(k){
+      var T=target(k.time,o),b=bands(T,o.step);
+      h+='<tr><td>'+esc(k.no)+'</td><td class="l">'+esc(k.name)+'</td><td>'+fmtTime(k.time)+'</td><td><b>'+T+'</b></td>'
+        +'<td>〜'+b[0].hi+'</td><td>'+b[1].lo+'〜'+b[1].hi+'</td><td>'+b[2].lo+'〜'+b[2].hi+'</td><td>'+b[3].lo+'〜'+b[3].hi+'</td><td>'+b[4].lo+'〜</td><td></td><td></td></tr>';
+    });
+    return h+'</table></div></div></section>';
+  }
+
+  function opts(){
+    return{grade:$('grade').value==='high'?'high':'low',klass:$('klass').value.trim(),lessons:Math.round(num('lessons',5,3,7)),
+      score:$('score').checked,base:num('base',550,100,900),coef:num('coef',30,1,80),step:Math.round(num('step',10,2,30)),blanks:Math.round(num('blanks',0,0,45))};
+  }
+
+  function render(){
+    var o=opts(),r=parseRoster($('roster').value),html='';
+    document.body.classList.toggle('noruby',!$('ruby').checked);
+    r.kids.forEach(function(k){html+=card(k,o);});
+    var nb=o.blanks||(r.kids.length?0:1);
+    for(var i=0;i<nb;i++)html+=card(null,o);
+    if($('list').checked&&r.kids.length)html+=listSheet(r.kids,o);
+    $('preview').innerHTML=html;
+    $('ex').textContent=target(9.8,o)+'cm（'+mcm(target(9.8,o))+'）';
+    var st=r.kids.length?'<b>'+r.kids.length+'人分</b>のカードを作りました。':'タイムを入れると、一人ひとりのめやすが入ります（いまは手書き用を表示中）。';
+    if(r.bad.length)st+='<div class="warn">読みとれなかった行（'+r.bad.length+'）：'+r.bad.slice(0,5).map(esc).join(' ／ ')+(r.bad.length>5?' …':'')+'<br>行の最後に 5〜20秒のタイムを書いてください。</div>';
+    $('status').innerHTML=st;
+    try{var d={};ids.forEach(function(id){var e=$(id);d[id]=e.type==='checkbox'?e.checked:e.value;});localStorage.setItem(KEY,JSON.stringify(d));}catch(e){}
+  }
+
+  try{
+    var d=JSON.parse(localStorage.getItem(KEY)||'null');
+    if(d)ids.forEach(function(id){if(id in d){var e=$(id);if(e.type==='checkbox')e.checked=!!d[id];else e.value=d[id];}});
+  }catch(e){}
+  // 「…html#mihon」で開くと見本入り（印刷の確認用）
+  if(location.hash==='#mihon')$('roster').value=SAMPLE;
+
+  ids.forEach(function(id){$(id).addEventListener('input',render);$(id).addEventListener('change',render);});
+  $('sample').addEventListener('click',function(){$('roster').value=SAMPLE;render();});
+  $('clear').addEventListener('click',function(){
+    if($('roster').value&&!confirm('入力した名前とタイムを消します。よろしいですか？'))return;
+    $('roster').value='';render();
+  });
+  $('print').addEventListener('click',function(){window.print();});
+  render();
+})();
+</script>
+</body>
+</html>
