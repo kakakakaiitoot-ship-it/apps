@@ -175,6 +175,14 @@ tbody tr{cursor:pointer}
 .pk .pt{font-size:11px;line-height:1;margin-top:3px;color:var(--ink-3)}
 .pk[data-done="1"]{background:var(--ground);color:var(--ink-3);border-style:dashed}
 .pk:active{background:var(--blue-soft)}
+.pk[data-abs="1"]{background:var(--ground);color:var(--stop);border-color:var(--stop);border-style:dashed}
+.pk[data-abs="1"] .pt{color:var(--stop)}
+.runs{display:inline-block;margin-left:5px;font-size:11px;font-weight:700;color:var(--ink-3);border:1px solid var(--line);border-radius:6px;padding:0 4px;vertical-align:1px}
+.absT{color:var(--stop);font-weight:700}
+#kpRunsBox .hint{margin:0 0 6px}
+#kpRuns{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:6px;margin-bottom:10px}
+#kpRuns button{border:2px solid var(--line);border-radius:10px;padding:9px 6px;font-weight:700;font-size:15px;background:var(--paper)}
+#kpRuns button[aria-pressed="true"]{border-color:var(--done);background:var(--done-soft);color:var(--done)}
 .keys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .key{background:var(--paper);border:2px solid var(--line);border-radius:12px;font-size:24px;font-weight:700;padding:14px 0}
 .key:active{background:var(--blue-soft)}
@@ -245,6 +253,7 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
         <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
           <span style="font-size:13px;font-weight:700;color:var(--ink-2)">記録ずみ</span>
           <span class="num" id="progTotal" style="margin-left:auto;font-size:15px;font-weight:700"></span>
+          <button class="btn ghost sm tap" id="btnAbs">欠席を入れる</button>
         </div>
         <div class="row4" id="progByClass"></div>
       </div>
@@ -276,7 +285,7 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
       <div class="card tableWrap">
         <table class="num" id="table"></table>
       </div>
-      <p class="hint" style="margin:8px 0 16px">行をタップするとタイムを直せます。「秒」列は計算用の数値です。</p>
+      <p class="hint" style="margin:8px 0 16px">行をタップするとタイムを直せます。2回走った子は、どちらの記録を使うかも選べます（はじめは速いほう）。「秒」列は計算用の数値です。</p>
       <div class="card" style="padding:12px;margin-bottom:8px">
         <button class="btn ghost tap" id="openImport" style="width:100%">名簿の写真から読み込む</button>
         <p class="hint" style="margin:8px 0 0">紙の名簿に手書きした記録を写真から読み取って、この表に入れます。そのままExcelに出せます。</p>
@@ -392,7 +401,7 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
       <button class="tap" data-c="3" aria-pressed="false">3組</button>
       <button class="tap" data-c="4" aria-pressed="false">4組</button>
     </div>
-    <p class="hint" style="margin:0 0 8px">うすい番号は記録ずみ（押すと上書きします）</p>
+    <p class="hint" id="pkHint" style="margin:0 0 8px"></p>
     <div class="pkGrid" id="pkGrid"></div>
   </div>
 </div>
@@ -403,6 +412,10 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
     <div class="sheetHead">
       <span class="t" id="kpWho"></span>
       <button class="btn ghost sm tap" id="kpClose">閉じる</button>
+    </div>
+    <div id="kpRunsBox" hidden>
+      <p class="hint">どの記録を使うか選べます（はじめは速いほう）</p>
+      <div id="kpRuns"></div>
     </div>
     <div id="kpEcho" class="num">—</div>
     <div id="kpParsed"></div>
@@ -544,11 +557,11 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
 
   function withRanks(){
     const rows=S.results.map(r=>Object.assign({},r));
-    const all=rows.slice().sort(byT);
+    const all=rows.filter(r=>!r.abs).sort(byT);
     let rank=0,prev=null,seen=0;
     all.forEach(r=>{ seen++; if(prev===null||r.t>prev){rank=seen;prev=r.t;} r.rank=rank; });
     [1,2,3,4].forEach(c=>{
-      const g=rows.filter(r=>r.c===c).sort(byT);
+      const g=rows.filter(r=>r.c===c&&!r.abs).sort(byT);
       let k=0,p=null,s2=0;
       g.forEach(r=>{ s2++; if(p===null||r.t>p){k=s2;p=r.t;} r.crank=k; });
     });
@@ -601,7 +614,8 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
 
   function renderProgress(){
     const total=[1,2,3,4].reduce((a,c)=>a+(S.counts[c]||0),0);
-    $("#progTotal").textContent=S.results.length+" / "+total+" 人";
+    const nAbs=S.results.filter(r=>r.abs).length;
+    $("#progTotal").textContent=S.results.length+" / "+total+" 人"+(nAbs?"（欠席 "+nAbs+"）":"");
     let h="";
     [1,2,3,4].forEach(c=>{
       const done=S.results.filter(r=>r.c===c).length, cnt=S.counts[c]||0;
@@ -613,23 +627,30 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
   function renderTable(){
     let rows=withRanks();
     if(filter!=="all") rows=rows.filter(r=>r.c===parseInt(filter,10));
-    rows.sort(sortMode==="no" ? (a,b)=>a.c-b.c||a.n-b.n : (a,b)=>a.t-b.t||a.c-b.c||a.n-b.n);
+    const tv=r=>r.abs?Infinity:r.t;
+    rows.sort(sortMode==="no" ? (a,b)=>a.c-b.c||a.n-b.n : (a,b)=>tv(a)-tv(b)||a.c-b.c||a.n-b.n);
 
     let h='<thead><tr><th>全体</th><th>組内</th><th>クラス</th><th>番号</th><th>タイム</th><th>秒</th><th>組</th></tr></thead><tbody>';
     rows.forEach(r=>{
+      if(r.abs){
+        h+='<tr class="tap" data-c="'+r.c+'" data-n="'+r.n+'"><td style="color:var(--ink-3)">—</td><td></td>'
+         + '<td><span class="cb cb'+r.c+'">'+r.c+'組</span></td><td>'+r.n+'</td>'
+         + '<td class="absT">欠席</td><td></td><td></td></tr>';
+        return;
+      }
       h+='<tr class="tap" data-c="'+r.c+'" data-n="'+r.n+'">'
        + '<td'+(r.rank===1?' style="color:var(--blue);font-weight:700"':'')+'>'+r.rank+'</td>'
        + '<td style="color:var(--ink-2)">'+r.crank+'</td>'
        + '<td><span class="cb cb'+r.c+'">'+r.c+'組</span></td>'
        + '<td>'+r.n+'</td>'
-       + '<td style="font-weight:700">'+fmt(r.t)+'</td>'
+       + '<td style="font-weight:700">'+fmt(r.t)+(r.a&&r.a.length>1?'<span class="runs">'+r.a.length+'回</span>':'')+'</td>'
        + '<td style="color:var(--ink-2)">'+r.t.toFixed(2)+'</td>'
        + '<td style="color:var(--ink-3)">'+(r.g==null?"写真":r.g)+'</td></tr>';
     });
     if(!rows.length) h+='<tr><td colspan="7" style="text-align:center;color:var(--ink-3);padding:24px 0">まだ記録がありません</td></tr>';
     $("#table").innerHTML=h+'</tbody>';
 
-    const ts=rows.map(r=>r.t);
+    const ts=rows.filter(r=>!r.abs).map(r=>r.t);
     const cnt = filter==="all" ? [1,2,3,4].reduce((a,c)=>a+(S.counts[c]||0),0) : (S.counts[parseInt(filter,10)]||0);
     $("#sumDone").textContent=ts.length+"/"+cnt;
     $("#sumBest").textContent=ts.length?fmt(Math.min.apply(null,ts)):"—";
@@ -646,23 +667,28 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
   }
 
   let toastTimer=0;
-  function toast(m){ const e=$("#toast"); e.textContent=m; e.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>{e.hidden=true;},1900); }
+  function toast(m,ms){ const e=$("#toast"); e.textContent=m; e.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>{e.hidden=true;},ms||1900); }
 
   /* ---- 選手ピッカー ---- */
-  let pkClass=1, pkCb=null, pkOpenedAt=0;
-  function openPicker(title, cb, preferClass){
-    pkCb=cb; if(preferClass) pkClass=preferClass;
+  /* pkMode: "pick"＝着順に選手を割り当てる／"abs"＝欠席の子に印を付ける（押すたびに付けたり外したり） */
+  let pkClass=1, pkCb=null, pkOpenedAt=0, pkMode="pick";
+  function openPicker(title, cb, preferClass, mode){
+    pkCb=cb; pkMode=mode||"pick"; if(preferClass) pkClass=preferClass;
     $("#pkTitle").textContent=title;
+    $("#pkHint").textContent = pkMode==="abs"
+      ? "欠席の子の番号を押してください。もう一度押すと取り消せます。タイムがある子は選べません。"
+      : "うすい番号は記録ずみ（もう一度走ると速いほうを残します）。赤い点線は欠席。";
     document.querySelectorAll("#pkClassSeg button").forEach(b=>b.setAttribute("aria-pressed", parseInt(b.dataset.c,10)===pkClass));
     renderPicker(); $("#picker").hidden=false; pkOpenedAt=clk();
   }
-  function closePicker(){ $("#picker").hidden=true; pkCb=null; }
+  function closePicker(){ $("#picker").hidden=true; pkCb=null; pkMode="pick"; }
   function renderPicker(){
     const cnt=S.counts[pkClass]||0; let h="";
     for(let n=1;n<=cnt;n++){
-      const r=findRec(pkClass,n), used=inRace(pkClass,n);
-      h+='<button class="pk tap" data-n="'+n+'" data-done="'+(r?1:0)+'"'+(used?' disabled style="opacity:.3"':'')+'>'
-        +'<span class="pn num">'+n+'</span><span class="pt num">'+(used?"この組":(r?fmt(r.t):"&nbsp;"))+'</span></button>';
+      const r=findRec(pkClass,n), used=inRace(pkClass,n), abs=!!(r&&r.abs);
+      const off=used||(pkMode==="abs"&&r&&!abs);
+      h+='<button class="pk tap" data-n="'+n+'" data-done="'+(r&&!abs?1:0)+'" data-abs="'+(abs?1:0)+'"'+(off?' disabled style="opacity:.3"':'')+'>'
+        +'<span class="pn num">'+n+'</span><span class="pt num">'+(used?"この組":(abs?"欠席":(r?fmt(r.t):"&nbsp;")))+'</span></button>';
     }
     $("#pkGrid").innerHTML=h;
   }
@@ -678,15 +704,36 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
     if(e.target===$("#picker")){ closePicker(); return; }
     const b=e.target.closest("[data-n]"); if(!b||b.disabled) return;
     const n=parseInt(b.dataset.n,10), cb=pkCb;
+    if(pkMode==="abs"){ toggleAbs(pkClass,n); renderPicker(); return; }
     closePicker(); if(cb) cb(pkClass,n);
   });
+
+  /* ---- 欠席 ---- */
+  function toggleAbs(c,n){
+    const r=findRec(c,n);
+    if(r&&!r.abs) return;
+    if(S.sample) dropSample(); else snap();
+    if(r) S.results=S.results.filter(x=>x!==r);
+    else S.results.push({c:c,n:n,t:null,g:null,abs:true});
+    commit();
+  }
+  $("#btnAbs").onclick=()=>{
+    if(running){ toast("走り終わってから入れてください"); return; }
+    openPicker("欠席の子を選ぶ", null, undefined, "abs");
+  };
 
   /* ---- テンキー ---- */
   let kpTarget=null, kpBuf="";
   function openKeypad(target,label,current){
     kpTarget=target; kpBuf="";
     $("#kpWho").innerHTML=label;
+    const rec = target.kind==="result" ? findRec(target.c,target.n) : null;
     $("#kpDelete").hidden = !(target.kind==="result");
+    $("#kpDelete").textContent = rec&&rec.abs ? "欠席を取り消す" : "この記録を削除";
+    const runs = rec&&rec.a&&rec.a.length>1 ? rec.a : null;
+    $("#kpRunsBox").hidden = !runs;
+    $("#kpRuns").innerHTML = runs ? runs.map((x,i)=>'<button class="tap num" data-run="'+i+'" aria-pressed="'+(x.t===rec.t&&x.g===rec.g)+'">'
+      +(i+1)+'回目　'+fmt(x.t)+'</button>').join("") : "";
     $("#keypad").dataset.cur = current==null?"":current;
     $("#keypad").hidden=false; updateKp();
   }
@@ -695,7 +742,7 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
     $("#kpEcho").textContent=kpBuf||"—";
     const v=parseInput(kpBuf), cur=$("#keypad").dataset.cur;
     $("#kpParsed").textContent = v==null
-      ? (cur?("いまの記録："+fmt(parseFloat(cur))):"数字を入力してください（例 8.45／3:45.6）")
+      ? (cur?("いまの記録："+fmt(parseFloat(cur))):($("#kpDelete").textContent==="欠席を取り消す"?"いまは欠席です。タイムを入れると記録になります":"数字を入力してください（例 8.45／3:45.6）"))
       : "→ "+fmt(v)+"（"+v.toFixed(2)+"秒）";
   }
   $("#keypad").addEventListener("click",(e)=>{
@@ -712,13 +759,28 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
     let added=null;
     if(tg.kind==="lane"){ S.race.f[tg.i].t=v; S.race.f.sort(byT); }
     else if(tg.kind==="new"){ added={t:v,c:null,n:null}; S.race.f.push(added); S.race.f.sort(byT); }
-    else { const r=findRec(tg.c,tg.n); if(r) r.t=v; }
+    else {
+      const r=findRec(tg.c,tg.n);
+      if(r){
+        /* 2回以上走った子は、いま使っている回のタイムを直す */
+        if(r.a){ const x=r.a.find(x=>x.t===r.t&&x.g===r.g); if(x) x.t=v; }
+        r.t=v; delete r.abs;
+      }
+    }
     closeKeypad(); commit(); toast("タイムを入れました");
     if(added) setTimeout(()=>pickInto(S.race.f.indexOf(added)),120);
   };
+  $("#kpRuns").addEventListener("click",(e)=>{
+    const b=e.target.closest("[data-run]"); if(!b||!kpTarget) return;
+    const r=findRec(kpTarget.c,kpTarget.n); if(!r||!r.a) return;
+    const i=parseInt(b.dataset.run,10), x=r.a[i]; if(!x) return;
+    snap(); r.t=x.t; r.g=x.g;
+    closeKeypad(); commit(); toast((i+1)+"回目の "+fmt(x.t)+" にしました");
+  });
   $("#kpDelete").onclick=()=>{
     snap(); S.results=S.results.filter(r=>!(r.c===kpTarget.c&&r.n===kpTarget.n));
-    closeKeypad(); commit(); toast("記録を削除しました");
+    const wasAbs=$("#kpDelete").textContent==="欠席を取り消す";
+    closeKeypad(); commit(); toast(wasAbs?"欠席を取り消しました":"記録を削除しました");
   };
 
   /* ---- 着順カードの操作 ---- */
@@ -743,7 +805,9 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
     openPicker((i+1)+"着　"+fmt(l.t)+"　だれ？", (c,n)=>{
       const cur=S.race.f[i]; if(!cur) return;
       snap(); cur.c=c; cur.n=n; commit();
-      if(findRec(c,n)) toast(c+"組 "+n+"番は記録ずみです（確定すると上書き）");
+      const old=findRec(c,n);
+      if(old) toast(old.abs ? c+"組 "+n+"番は欠席になっています（確定すると記録に入ります）"
+                            : c+"組 "+n+"番は記録ずみです（確定すると速いほうを残します）");
       const nx=firstOrphan();
       if(nx>=0) setTimeout(()=>pickInto(nx),120);
     }, l.c||undefined);
@@ -790,12 +854,24 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
     if(running) return;
     if(firstOrphan()>=0){ toast("選手が決まっていないタイムがあります"); assignNext(); return; }
     snap();
+    const g=S.race.g, again=[];
     S.race.f.forEach(l=>{
+      const old=findRec(l.c,l.n);
+      if(old&&!old.abs){
+        /* 2回目以降：全部の回を a に残し、速いほうを使う（同じタイムなら前の回） */
+        const runs=(old.a&&old.a.length?old.a:[{t:old.t,g:old.g}]).concat([{t:l.t,g:g}]);
+        const best=runs.reduce((x,y)=>y.t<x.t?y:x);
+        old.a=runs; old.t=best.t; old.g=best.g;
+        again.push(l.c+"組"+l.n+"番は"+runs.length+"回目："+(best.g===g&&best.t===l.t?"今回":"前")+"の "+fmt(best.t)+" を残しました");
+        return;
+      }
       S.results=S.results.filter(r=>!(r.c===l.c&&r.n===l.n));
-      S.results.push({c:l.c,n:l.n,t:l.t,g:S.race.g});
+      S.results.push({c:l.c,n:l.n,t:l.t,g:g});
     });
-    S.race={g:S.race.g+1, f:[]};
-    resetWatch(); commit(); toast("第 "+(S.race.g-1)+" 組を記録しました");
+    S.race={g:g+1, f:[]};
+    resetWatch(); commit();
+    if(again.length) toast(again[0]+(again.length>1?"（ほか "+(again.length-1)+" 人）":""), 4000);
+    else toast("第 "+g+" 組を記録しました");
     $("#tab-measure").scrollTop=0;
   };
   $("#clearRace").onclick=()=>{
@@ -845,7 +921,8 @@ textarea.field{height:200px;white-space:pre;font-size:13px}
   function matrix(){
     const rows=withRanks().sort((a,b)=> a.c-b.c || a.n-b.n);
     const head=["クラス","出席番号","タイム","秒","学年順位","クラス内順位","組"];
-    const body=rows.map(r=>[ r.c+"組", r.n, fmt(r.t), Number(r.t.toFixed(2)), r.rank, r.crank, r.g==null?"":r.g ]);
+    const body=rows.map(r=> r.abs ? [ r.c+"組", r.n, "欠席", "", "", "", "" ]
+      : [ r.c+"組", r.n, fmt(r.t), Number(r.t.toFixed(2)), r.rank, r.crank, r.g==null?"":r.g ]);
     return {title:S.grade+"　"+S.event+"　"+S.date.replace(/-/g,"/"), head:head, body:body};
   }
   function tsv(){ const m=matrix(); return [m.head].concat(m.body).map(r=>r.join("\t")).join("\n"); }
