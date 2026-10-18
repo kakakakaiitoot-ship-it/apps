@@ -41,7 +41,7 @@
   .preview{flex:1;overflow:auto;padding:20px}
   .sheet{width:100%;max-width:210mm;margin:0 auto 20px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.18);padding:6% 4.3% 7%}
   .inner{container-type:inline-size;position:relative;width:100%;aspect-ratio:192/258}
-  .card{position:absolute;inset:0;display:flex;flex-direction:column;gap:calc(2.2*var(--u));overflow:hidden;font-size:calc(10.5*var(--p));line-height:1.5}
+  .card{position:absolute;inset:0;display:flex;flex-direction:column;gap:calc(1.8*var(--u));overflow:hidden;font-size:calc(10.5*var(--p));line-height:1.5}
   .sheet.list .inner{aspect-ratio:auto}
   .sheet.list .card{position:static;display:block;overflow:visible}
 
@@ -85,7 +85,7 @@
   .pt{border:1px solid var(--line);border-radius:calc(2*var(--u));padding:calc(.8*var(--u)) calc(2*var(--u)) calc(1.2*var(--u));font-size:calc(9.3*var(--p));line-height:1.5}
   .pt b{display:block;font-size:calc(10.5*var(--p))}
   .pt b .n{display:inline-flex;align-items:center;justify-content:center;width:calc(5*var(--u));height:calc(5*var(--u));border-radius:50%;border:1.3px solid var(--line);font-size:calc(9*var(--p));margin-right:calc(1*var(--u))}
-  .diagram{width:100%;height:calc(16*var(--u));display:block}
+  .diagram{width:100%;height:calc(12*var(--u));display:block}
 
   .rec{table-layout:fixed}
   .rec th,.rec td{border:1px solid var(--line);text-align:center;font-size:calc(9.5*var(--p));padding:0 calc(1*var(--u))}
@@ -93,6 +93,11 @@
   .rec td{height:calc(7.6*var(--u))}
   .rec.tight td{height:calc(6.5*var(--u))}
   .rec.tight7 td{height:calc(5.6*var(--u))}
+  .rec.tight8 td{height:calc(5*var(--u))}
+  .rec.tight7 td,.rec.tight8 td{line-height:1.15}
+  .rec.tight7 td.no,.rec.tight8 td.no{font-size:calc(10.5*var(--p))}
+  .rec.tight7 td.pick,.rec.tight8 td.pick{font-size:calc(9.5*var(--p));line-height:1.15}
+  .rec.tight7 td.fr,.rec.tight8 td.fr{line-height:1.2;padding-top:calc(.2*var(--u));padding-bottom:calc(.2*var(--u))}
   .rec td.no{font-size:calc(12*var(--p));font-weight:800;background:var(--pale)}
   .rec td.unit{font-size:calc(8*var(--p));color:var(--sub);text-align:right;vertical-align:bottom;padding:0 calc(1*var(--u)) calc(.5*var(--u))}
   .rec td.best{background:var(--yellow)}
@@ -103,12 +108,10 @@
 
   .bottom{flex:1;display:flex;gap:calc(2.4*var(--u));min-height:0}
   .bottom .sec{display:flex;flex-direction:column;min-height:0}
-  .bottom .gwrap{flex:0 0 calc(86*var(--u))}
   .bottom .rwrap{flex:1}
-  .graph{flex:1;width:100%;min-height:0}
   .lines{flex:1;display:flex;flex-direction:column;min-height:0}
-  .lines i{flex:1;border-bottom:1px dashed #8a97a4;min-height:calc(4*var(--u))}
-  .lines .q{font-size:calc(9.3*var(--p));margin-top:calc(1*var(--u))}
+  .lines i{flex:1;border-bottom:1px dashed #8a97a4;min-height:calc(4*var(--u));max-height:calc(11*var(--u))}
+  .lines .q{font-size:calc(10*var(--p));margin-top:calc(1.5*var(--u))}
 
   .list h3{font-size:calc(15*var(--p));margin:0 0 calc(3*var(--u))}
   .list p{font-size:calc(9.5*var(--p));margin:0 0 calc(3*var(--u));color:var(--sub)}
@@ -159,7 +162,7 @@
         <option value="high">5・6年（走りはばとび）</option>
       </select></label></div>
     <div class="row"><label>学年・組 <input type="text" id="klass" size="10" placeholder="3年1組"></label></div>
-    <div class="row"><label>学習の回数 <input type="number" id="lessons" min="3" max="7" value="5"> 回</label></div>
+    <div class="row"><label>学習の回数（記録らんの数） <select id="lessons"><option value="3">3回</option><option value="4">4回</option><option value="5" selected>5回</option><option value="6">6回</option><option value="7">7回</option><option value="8">8回</option></select></label></div>
     <div class="row"><label><input type="checkbox" id="ruby" checked> ふりがなをつける</label></div>
     <div class="row"><label><input type="checkbox" id="score" checked> 得点表をのせる</label></div>
     <div class="row"><label><input type="checkbox" id="list" checked> 先生用の一覧表もつける</label></div>
@@ -267,25 +270,6 @@
     +'<g font-size="11" fill="#5b6b7b" text-anchor="middle"><text x="377" y="79">ふみ切るところ</text><text x="512" y="79">すな場</text></g>'
     +'</svg>';
 
-  function graph(T,n){
-    // たて：めやす±50cm、よこ：はじめ＋1〜n回
-    var W=330,H=230,L=44,Rr=8,Tp=8,B=22,ph=H-Tp-B,pw=W-L-Rr,s='',cols=n+1;
-    for(var i=0;i<=10;i++){
-      var y=Tp+ph*i/10,d=50-i*10,mid=(d===0);
-      s+='<line x1="'+L+'" y1="'+y+'" x2="'+(W-Rr)+'" y2="'+y+'" stroke="'+(mid?'#1565c0':'#9aa7b4')+'" stroke-width="'+(mid?2:0.7)+'"/>';
-      var lab=T===null?(mid?'めやす':''):String(T+d);
-      s+='<text x="'+(L-5)+'" y="'+(y+4)+'" font-size="'+(T===null?10:11)+'" text-anchor="end" fill="'+(mid?'#1565c0':'#1b2a3a')+'" font-weight="'+(mid?800:400)+'">'+lab+'</text>';
-    }
-    for(var k=0;k<cols;k++){
-      var x=L+pw*(k+0.5)/cols;
-      s+='<line x1="'+x+'" y1="'+Tp+'" x2="'+x+'" y2="'+(Tp+ph)+'" stroke="#9aa7b4" stroke-width="0.7" stroke-dasharray="2 3"/>';
-      s+='<text x="'+x+'" y="'+(H-6)+'" font-size="10.5" text-anchor="middle" fill="#1b2a3a">'+(k===0?'はじめ':k+'回')+'</text>';
-    }
-    s+='<rect x="'+L+'" y="'+Tp+'" width="'+pw+'" height="'+ph+'" fill="none" stroke="#1b2a3a" stroke-width="1.3"/>';
-    if(T!==null)s+='<text x="'+(W-Rr-4)+'" y="'+(Tp+ph/2-4)+'" font-size="10.5" text-anchor="end" fill="#1565c0" font-weight="800">めやす</text>';
-    return'<svg class="graph" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+s+'</svg>';
-  }
-
   function card(kid,o){
     var blank=!kid, T=blank?null:target(kid.time,o), G=GRADE[o.grade], h='', i;
     h+='<div class="head"><div class="title">'+R(G.title)+'<small>'+R('{学習|がくしゅう}カード')+'</small></div>'
@@ -326,7 +310,7 @@
     // 3 毎回の記録とふりかえり
     h+='<div class="sec"><h3><span class="no">3</span>'+R('{記録|きろく}とふりかえり')
       +'<span class="note">'+R('はじめに「がんばること」の{番号|ばんごう}に○ → とんだら、ふりかえりを{書|か}こう')+'</span></h3>'
-      +'<table class="rec'+(o.lessons>6?' tight7':o.lessons>5?' tight':'')+'"><tr><th style="width:calc(8*var(--u))">'+R('{回|かい}')+'</th><th style="width:calc(17*var(--u))">'+R('{月|がつ}／{日|にち}')+'</th><th style="width:calc(33*var(--u))">'+R('がんばること')+'</th>'
+      +'<table class="rec'+(o.lessons>7?' tight8':o.lessons>6?' tight7':o.lessons>5?' tight':'')+'"><tr><th style="width:calc(8*var(--u))">'+R('{回|かい}')+'</th><th style="width:calc(17*var(--u))">'+R('{月|がつ}／{日|にち}')+'</th><th style="width:calc(33*var(--u))">'+R('がんばること')+'</th>'
       +'<th>'+R('1{回目|かいめ}')+'</th><th>'+R('2{回目|かいめ}')+'</th><th>'+R('3{回目|かいめ}')+'</th><th>'+R('いちばんよい{記録|きろく}')+'</th>'
       +(o.score?'<th style="width:calc(15*var(--u))">'+R('{得点|とくてん}')+'</th>':'')+'</tr>';
     for(i=1;i<=o.lessons;i++){
@@ -336,11 +320,11 @@
     }
     h+='</table></div>';
 
-    // 4 グラフ ＋ 5 学習をおえて
-    h+='<div class="bottom"><div class="sec gwrap"><h3><span class="no">4</span>'+R('{記録|きろく}グラフ')+'<span class="note">'+R('(cm)　めあてに{赤|あか}い{線|せん}を{引|ひ}こう')+'</span></h3>'+graph(T,o.lessons)+'</div>'
-      +'<div class="sec rwrap"><h3><span class="no">5</span>'+R('{学習|がくしゅう}をおえて')+'</h3><div class="lines">'
-      +'<div class="q">'+R('◆ {記録|きろく}がのびたのは、どんなことをがんばったとき？')+'</div><i></i><i></i>'
-      +(o.lessons<=5?'<div class="q">'+R('◆ {次|つぎ}にがんばりたいこと')+'</div><i></i><i></i>':'')
+    // 4 学習をおえて（グラフはなくし、そのぶん広く。回数が少ないほど行をふやす）
+    var L=new Array((o.lessons<=3?3:o.lessons>=8?1:2)+1).join('<i></i>');
+    h+='<div class="bottom"><div class="sec rwrap"><h3><span class="no">4</span>'+R('{学習|がくしゅう}をおえて')+'</h3><div class="lines">'
+      +'<div class="q">'+R('◆ {記録|きろく}がのびたのは、どんなことをがんばったとき？')+'</div>'+L
+      +'<div class="q">'+R('◆ {次|つぎ}にがんばりたいこと')+'</div>'+L
       +'</div></div></div>';
     return'<section class="sheet"><div class="inner"><div class="card">'+h+'</div></div></section>';
   }
@@ -358,7 +342,7 @@
   }
 
   function opts(){
-    return{grade:$('grade').value==='high'?'high':'low',klass:$('klass').value.trim(),lessons:Math.round(num('lessons',5,3,7)),
+    return{grade:$('grade').value==='high'?'high':'low',klass:$('klass').value.trim(),lessons:Math.round(num('lessons',5,3,8)),
       score:$('score').checked,base:num('base',550,100,900),coef:num('coef',30,1,80),step:Math.round(num('step',10,2,30)),blanks:Math.round(num('blanks',0,0,45))};
   }
 
