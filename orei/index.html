@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>お礼カードメーカー 飾り枠版</title>
+<style id="pageStyle">@page{size:A4 portrait;margin:8mm;}</style>
+<style>
+:root{
+  --blue:#1a6fd4;--blue-d:#12509c;--blue-l:#eaf2fd;
+  --line:#d8dee7;--ink:#20303f;--muted:#6b7b8c;
+  --f-maru:"Rounded Mplus 1c","ヒラギノ丸ゴ ProN","Hiragino Maru Gothic ProN","M PLUS Rounded 1c","Yu Gothic UI","游ゴシック","Yu Gothic","Meiryo","Noto Sans CJK JP",sans-serif;
+  --f-kyoka:"UD デジタル 教科書体 NK-R","UD Digi Kyokasho NK-R","游教科書体","Yu Kyokasho","BIZ UDPMincho","游明朝","Yu Mincho","Hiragino Mincho ProN","Noto Serif CJK JP","Noto Sans CJK JP",serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{font-family:"Hiragino Sans","Yu Gothic UI","Meiryo","Noto Sans CJK JP",system-ui,sans-serif;color:var(--ink);background:#f2f5f9;overflow:hidden}
+.app{display:flex;height:100vh}
+
+/* ============ 操作パネル ============ */
+.control-panel{width:360px;min-width:360px;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;box-shadow:2px 0 12px rgba(20,60,110,.06);z-index:2}
+.ph{padding:14px 16px 12px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#f7fafe)}
+.ph h1{margin:0 0 2px;font-size:15px}
+.back{display:inline-block;font-size:12px;font-weight:700;color:var(--blue-d);text-decoration:none;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:2px 11px;margin-bottom:8px;white-space:nowrap}
+.back:hover{border-color:var(--blue);background:var(--blue-l)}
+.ph p{margin:0 0 10px;font-size:11px;color:var(--muted)}
+.btn-print{width:100%;padding:13px;font-size:16px;font-weight:700;color:#fff;background:var(--blue);border:0;border-radius:10px;cursor:pointer;box-shadow:0 3px 0 var(--blue-d);letter-spacing:.06em}
+.btn-print:active{transform:translateY(2px);box-shadow:0 1px 0 var(--blue-d)}
+.pb{flex:1;overflow-y:auto;padding:4px 16px 48px}
+.pb::-webkit-scrollbar{width:10px}.pb::-webkit-scrollbar-thumb{background:#cdd8e6;border-radius:6px;border:3px solid #fff}
+section.grp{padding:14px 0 6px;border-bottom:1px dashed var(--line)}
+section.grp:last-child{border-bottom:0}
+.grp h2{margin:0 0 9px;font-size:12px;font-weight:700;color:var(--blue-d);letter-spacing:.08em}
+.sub{font-size:10.5px;color:var(--muted);margin:10px 0 6px;letter-spacing:.06em}
+.sub:first-of-type{margin-top:0}
+.row{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.row .k{flex:0 0 68px;font-size:12px;color:var(--muted)}
+input[type=text]{flex:1;min-width:0;padding:7px 9px;border:1px solid var(--line);border-radius:7px;font-size:13px}
+input[type=text]:focus{outline:2px solid var(--blue-l);border-color:var(--blue)}
+input[type=range]{flex:1;accent-color:var(--blue)}
+.val{flex:0 0 46px;text-align:right;font-size:12px;font-weight:700;color:var(--blue-d)}
+.seg{display:flex;gap:6px;flex:1;flex-wrap:wrap}
+.seg button{flex:1;min-width:0;padding:8px 4px;font-size:12px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;color:var(--ink)}
+.seg button.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}
+.seg.wide button{flex:1 1 46%}
+.chk{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:12.5px;cursor:pointer}
+.chk input{width:17px;height:17px;accent-color:var(--blue)}
+.note{font-size:11px;color:var(--muted);line-height:1.6;margin:2px 0 0}
+
+/* 枠ピッカー */
+.frames{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.frames button{padding:5px 4px 4px;border:1px solid var(--line);background:#fff;border-radius:9px;cursor:pointer;font-size:9.5px;color:var(--muted);line-height:1.25}
+.frames button.on{border-color:var(--blue);background:var(--blue-l);color:var(--blue-d);font-weight:700;box-shadow:inset 0 0 0 1px var(--blue)}
+.fprev{position:relative;width:100%;aspect-ratio:1.5;margin-bottom:3px;background:#fff;border-radius:4px;overflow:hidden}
+.fprev svg{position:absolute;inset:0;width:100%;height:100%}
+.fprev .pv{position:absolute;inset:0;border-radius:3px}
+
+/* カラーパレット */
+.pal{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.pal button{aspect-ratio:1;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);cursor:pointer;position:relative}
+.pal button.on{box-shadow:0 0 0 2.5px var(--blue)}
+.cpick{display:flex;align-items:center;gap:9px;margin-top:10px}
+.cpick input[type=color]{width:42px;height:32px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:2px;cursor:pointer}
+.cpick span{font-size:11.5px;color:var(--muted)}
+
+/* ============ プレビュー ============ */
+.preview{flex:1;overflow:auto;padding:24px;display:flex;justify-content:center;align-items:flex-start;
+  background:linear-gradient(0deg,rgba(0,0,0,.02) 1px,transparent 1px) 0 0/22px 22px,
+             linear-gradient(90deg,rgba(0,0,0,.02) 1px,transparent 1px) 0 0/22px 22px,#f2f5f9}
+.holder{position:relative}
+.page{background:#fff;transform-origin:top center;box-shadow:0 6px 28px rgba(20,60,110,.18);padding:8mm}
+.print-sheet{position:relative;display:grid;overflow:hidden}
+
+/* ============ カード ============ */
+.cell{position:relative;overflow:hidden;padding:2mm}
+.cardbox{position:relative;width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden}
+.fsvg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+
+/* --- CSSでつくる枠 --- */
+.f-round{border:.5mm solid var(--ac);border-radius:2.6mm}
+.f-double{border:1.3mm double var(--ac);border-radius:1.6mm}
+.f-stitch{border:.45mm solid var(--ac);border-radius:2.6mm}
+.f-stitch::after{content:"";position:absolute;inset:1.3mm;border:.3mm dashed var(--ac);border-radius:1.8mm;opacity:.75;pointer-events:none}
+.f-tape{border:.35mm solid var(--soft);border-radius:2.2mm}
+.tape{position:absolute;top:0.7mm;left:50%;width:34%;height:5.4mm;transform:translateX(-50%) rotate(-1.6deg);
+  background:repeating-linear-gradient(115deg,var(--pale) 0 2.2mm,var(--pale2) 2.2mm 4.4mm);
+  border-left:.3mm solid var(--soft);border-right:.3mm solid var(--soft);opacity:.95;pointer-events:none}
+.f-none{border:0}
+
+.ttl{display:flex;align-items:center;justify-content:center;gap:1.6mm;flex:0 0 auto;text-align:center;line-height:1.15;overflow:hidden;position:relative;z-index:1}
+.tt{color:var(--ac);font-weight:700;letter-spacing:.04em;white-space:nowrap}
+.tt rt{font-weight:400;letter-spacing:0;white-space:nowrap}
+.to{flex:0 0 auto;white-space:nowrap;overflow:hidden;color:#333;position:relative;z-index:1}
+.to u{text-decoration:none;border-bottom:.35mm solid var(--soft);padding:0 .4em}
+.nm{flex:0 0 auto;text-align:right;white-space:nowrap;overflow:hidden;color:#333;position:relative;z-index:1}
+.bd{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;overflow:hidden;position:relative;z-index:1}
+
+.draw{border:.45mm dashed var(--soft);border-radius:1.8mm;display:flex;align-items:center;justify-content:center;color:var(--soft);flex:0 0 auto}
+.hl{width:100%}
+.hl i{display:block;width:100%}
+.hl.solid i{border-bottom:.28mm solid var(--rule)}
+.hl.dot i{border-bottom:.45mm dotted var(--rule)}
+.vcenter{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.gridwrap{border-top:.35mm solid var(--rule2);border-left:.35mm solid var(--rule2);display:grid}
+.gcell{border-right:.28mm solid var(--rule2);border-bottom:.28mm solid var(--rule2);background-repeat:no-repeat;background-position:center center}
+.gcell.leader{background-image:repeating-linear-gradient(var(--lead) 0 .9mm,transparent .9mm 1.8mm),
+                                repeating-linear-gradient(90deg,var(--lead) 0 .9mm,transparent .9mm 1.8mm);
+  background-size:.2mm 100%,100% .2mm}
+.vl{display:flex;flex-direction:row-reverse;border-top:.35mm solid var(--rule2);border-bottom:.35mm solid var(--rule2);border-right:.35mm solid var(--rule2)}
+.vl i{display:block;height:100%;border-left:.28mm solid var(--rule)}
+
+/* 切り取りガイド */
+.cut{position:absolute;pointer-events:none;color:#9aa7b5}
+.cut.h{left:0;width:100%;border-top:.4mm dashed #b7c2ce}
+.cut.v{top:0;height:100%;border-left:.4mm dashed #b7c2ce}
+.cut .sc{position:absolute;font-size:3.4mm;line-height:1}
+.cut.h .sc{left:-.5mm;top:-2mm}
+.cut.v .sc{top:-.5mm;left:-2mm}
+
+.warn{position:fixed;left:376px;bottom:16px;background:#fff4e2;border:1px solid #f0d9ae;color:#8a5608;font-size:12px;padding:8px 12px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+
+/* ============ 印刷 ============ */
+@media print{
+  html,body{height:auto;overflow:visible}
+  body{margin:0;padding:0;background:#fff}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .control-panel,.no-print,.warn{display:none!important}
+  .preview{padding:0;overflow:visible;display:block;background:#fff}
+  .holder{width:auto!important;height:auto!important}
+  .page{padding:0;box-shadow:none;transform:none!important;width:auto!important;height:auto!important}
+  .print-sheet{width:100%;height:100%;page-break-after:avoid;break-after:avoid;page-break-inside:avoid;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="control-panel">
+    <div class="ph">
+      <a class="back" href="../">← 一覧</a>
+      <h1>お礼カードメーカー<span style="font-size:11px;color:var(--muted)">／飾り枠版</span></h1>
+      <p>A4に面付け → 切り分けて配付</p>
+      <button class="btn-print" onclick="window.print()">A4で印刷する</button>
+    </div>
+    <div class="pb">
+
+      <section class="grp">
+        <h2>面付け</h2>
+        <div class="seg wide" id="segCount" style="margin-bottom:9px">
+          <button data-v="8">8面（2×4）</button><button data-v="6">6面（2×3）</button>
+          <button data-v="4">4面（2×2）</button><button data-v="2">2面（1×2）</button>
+        </div>
+        <div class="row"><span class="k">用紙の向き</span>
+          <div class="seg" id="segOri"><button data-v="portrait">タテ</button><button data-v="landscape">ヨコ</button></div></div>
+        <p class="note" id="sizeNote"></p>
+      </section>
+
+      <section class="grp">
+        <h2>飾り枠（フレーム）</h2>
+        <p class="sub">クラシック・シンプル</p><div class="frames" id="fg1"></div>
+        <p class="sub">かわいい・学校向け</p><div class="frames" id="fg2"></div>
+        <p class="sub">コーナー飾り</p><div class="frames" id="fg3"></div>
+        <p class="sub">枠なし</p><div class="frames" id="fg4"></div>
+      </section>
+
+      <section class="grp">
+        <h2>枠・アクセントの色</h2>
+        <div class="pal" id="pal"></div>
+        <div class="cpick">
+          <input type="color" id="custom" value="#4a7c59">
+          <span id="colorName"></span>
+        </div>
+        <p class="note">見出し・あて名下線・罫線も同系色でうすく統一されます。</p>
+      </section>
+
+      <section class="grp">
+        <h2>見出し・記入欄</h2>
+        <label class="chk"><input type="checkbox" id="useTtl" checked>見出しを入れる</label>
+        <div class="row" id="rowTtl"><span class="k">見出し</span><input type="text" id="title"></div>
+        <div class="row" id="rowRuby"><span class="k">ふりがな</span><input type="text" id="ruby" placeholder="低学年用・空欄でOK"></div>
+        <div class="row"><span class="k">書体</span>
+          <div class="seg" id="segFont"><button data-v="maru">丸ゴシック</button><button data-v="kyoka">教科書体</button></div></div>
+        <label class="chk"><input type="checkbox" id="useTo" checked>あて先欄を入れる</label>
+        <div class="row" id="rowTo"><span class="k">あて先</span><input type="text" id="to"></div>
+        <label class="chk"><input type="checkbox" id="useNm" checked>なまえ欄を入れる</label>
+        <div class="row" id="rowNm"><span class="k">なまえ</span><input type="text" id="nm"></div>
+        <label class="chk"><input type="checkbox" id="useDraw">イラスト描画枠を入れる</label>
+        <div class="row" id="rowDraw"><span class="k">枠の高さ</span>
+          <input type="range" id="rngDraw" min="10" max="70" step="1"><span class="val" id="valDraw"></span></div>
+      </section>
+
+      <section class="grp">
+        <h2>罫線・記入欄</h2>
+        <div class="seg wide" id="segBody" style="margin-bottom:10px">
+          <button data-v="hline">横書き行線</button><button data-v="vgrid">縦書きマス目</button>
+          <button data-v="vline">縦書き行線</button><button data-v="blank">自由記入</button>
+        </div>
+        <div class="row" id="rowRows"><span class="k">行数</span>
+          <input type="range" id="rngRows" min="2" max="10" step="1"><span class="val" id="valRows"></span></div>
+        <div class="row" id="rowGap"><span class="k">行幅</span>
+          <div class="seg" id="segGap"><button data-v="s">狭め</button><button data-v="m">標準</button><button data-v="l">広め</button></div></div>
+        <div class="row" id="rowStyle"><span class="k">線の種類</span>
+          <div class="seg" id="segLineStyle"><button data-v="solid">実線</button><button data-v="dot">点線</button></div></div>
+        <div class="row" id="rowCell"><span class="k" id="lblCell">マスの大きさ</span>
+          <input type="range" id="rngCell" min="8" max="18" step="0.5"><span class="val" id="valCell"></span></div>
+        <label class="chk" id="rowLeader"><input type="checkbox" id="leader" checked>十字リーダー線（点線補助）を入れる</label>
+      </section>
+
+      <section class="grp">
+        <h2>印刷</h2>
+        <label class="chk"><input type="checkbox" id="cut" checked>切り取り線とハサミ印を入れる</label>
+        <p class="note">プリンタ側は「A4・拡大縮小なし(100%)」。用紙のフチ8mmは安全余白として確保済みです。</p>
+      </section>
+
+    </div>
+  </aside>
+
+  <main class="preview" id="previewWrap">
+    <div class="holder" id="holder"><div class="page" id="page"><div class="print-sheet" id="sheet"></div></div></div>
+  </main>
+</div>
+<div class="warn" id="warn" style="display:none"></div>
+
+<script>
+/* ==========================================================
+   飾り枠。kind:'css' はクラスだけ、'svg' はカードの実寸 mm を
+   viewBox にしたインラインSVGを重ねる（縦横比が一致するので
+   線の太さが歪まない）
+   ========================================================== */
+const SW=0.45;                       // 標準の線の太さ(mm)
+const FRAMES=[
+ /* --- 1. クラシック・シンプル --- */
+ {id:'round', g:1, name:'シンプル角丸', kind:'css', pad:0},
+ {id:'double',g:1, name:'二重線（賞状風）',kind:'css', pad:0.8},
+ {id:'ticket',g:1, name:'チケット・切手風',kind:'svg', pad:1.4, draw:(w,h)=>{
+    const r=Math.min(3.2,w*0.07,h*0.09);
+    const d=`M${r} 0 H${(w-r).toFixed(2)} A${r} ${r} 0 0 0 ${w} ${r} V${(h-r).toFixed(2)} `+
+            `A${r} ${r} 0 0 0 ${(w-r).toFixed(2)} ${h} H${r} A${r} ${r} 0 0 0 0 ${(h-r).toFixed(2)} `+
+            `V${r} A${r} ${r} 0 0 0 ${r} 0 Z`;
+    return `<path d="${d}" fill="none" stroke="var(--ac)" stroke-width="${SW}" stroke-dasharray="1.8 1.5" stroke-linecap="round"/>`;}},
+
+ /* --- 2. かわいい・学校向け --- */
+ {id:'stitch',g:2, name:'ステッチ風（手縫い）',kind:'css', pad:1.8},
+ {id:'scallop',g:2,name:'もこもこスカラップ',kind:'svg', pad:4.2, draw:(w,h)=>{
+    const r=3.0;
+    const nx=Math.max(2,Math.round((w-2*r)/(2*r))), dx=(w-2*r)/nx;
+    const ny=Math.max(2,Math.round((h-2*r)/(2*r))), dy=(h-2*r)/ny;
+    let d=`M${r} ${r}`;
+    for(let i=0;i<nx;i++) d+=` a ${dx/2} ${dx/2} 0 0 1 ${dx.toFixed(2)} 0`;
+    for(let i=0;i<ny;i++) d+=` a ${dy/2} ${dy/2} 0 0 1 0 ${dy.toFixed(2)}`;
+    for(let i=0;i<nx;i++) d+=` a ${dx/2} ${dx/2} 0 0 1 ${(-dx).toFixed(2)} 0`;
+    for(let i=0;i<ny;i++) d+=` a ${dy/2} ${dy/2} 0 0 1 0 ${(-dy).toFixed(2)}`;
+    return `<path d="${d}Z" fill="none" stroke="var(--ac)" stroke-width="${SW}" stroke-linejoin="round"/>`;}},
+ {id:'tape',g:2,  name:'マスキングテープ',kind:'css', pad:2.6, extra:'<div class="tape"></div>'},
+
+ /* --- 3. コーナー飾り --- */
+ {id:'clover',g:3,name:'四隅クローバー',kind:'svg', pad:3.2, draw:(w,h)=>
+    corners(w,h,3.0,`<g fill="var(--ac)" transform="translate(3.4,3.4) scale(0.085)">
+      <path d="M0 0C-4-15-18-19-22-10C-26-1-13 4 0 0Z"/>
+      <path d="M0 0C-4-15-18-19-22-10C-26-1-13 4 0 0Z" transform="rotate(90)"/>
+      <path d="M0 0C-4-15-18-19-22-10C-26-1-13 4 0 0Z" transform="rotate(180)"/>
+      <path d="M0 0C-4-15-18-19-22-10C-26-1-13 4 0 0Z" transform="rotate(270)"/></g>`,
+    `<rect x="${SW/2}" y="${SW/2}" width="${(w-SW).toFixed(2)}" height="${(h-SW).toFixed(2)}" rx="2.4"
+      fill="none" stroke="var(--soft)" stroke-width="${SW}"/>`)},
+ {id:'star',g:3,  name:'四隅キラキラ星',kind:'svg', pad:3.2, draw:(w,h)=>
+    corners(w,h,3.0,`<g fill="var(--ac)"><path d="M3.6 0.6C4 2.6 5 3.6 7 4C5 4.4 4 5.4 3.6 7.4C3.2 5.4 2.2 4.4 0.2 4C2.2 3.6 3.2 2.6 3.6 0.6Z"/>
+      <path d="M7.6 5.4C7.8 6.4 8.3 6.9 9.3 7.1C8.3 7.3 7.8 7.8 7.6 8.8C7.4 7.8 6.9 7.3 5.9 7.1C6.9 6.9 7.4 6.4 7.6 5.4Z" opacity=".75"/></g>`,
+    `<rect x="${SW/2}" y="${SW/2}" width="${(w-SW).toFixed(2)}" height="${(h-SW).toFixed(2)}" rx="2.4"
+      fill="none" stroke="var(--soft)" stroke-width="${SW}" stroke-dasharray="0.1 1.5" stroke-linecap="round"/>`)},
+ {id:'elegant',g:3,name:'エレガント飾り罫',kind:'svg', pad:3.4, draw:(w,h)=>
+    corners(w,h,2.2,`<g fill="none" stroke="var(--ac)" stroke-width="${SW}" stroke-linecap="round">
+      <path d="M0 13V3.4C0 1.5 1.5 0 3.4 0H13"/>
+      <path d="M2.4 13.6V5.2C2.4 3.7 3.7 2.4 5.2 2.4H13.6"/>
+      <circle cx="4.6" cy="4.6" r="1.05" fill="var(--ac)" stroke="none"/></g>`,'')},
+
+ /* --- 4. 枠なし --- */
+ {id:'none',g:4,  name:'枠なし（切り取り線のみ）',kind:'css', pad:0}
+];
+/* 四隅に同じ飾りを置く（左上の座標系で描いたものを反転して配置） */
+function corners(w,h,m,orn,base){
+  const T=(x,y,sx,sy)=>`<g transform="translate(${x},${y}) scale(${sx},${sy})">${orn}</g>`;
+  return (base||'')+T(m,m,1,1)+T(w-m,m,-1,1)+T(m,h-m,1,-1)+T(w-m,h-m,-1,-1);
+}
+const FRAME=id=>FRAMES.find(f=>f.id===id);
+
+/* ==================== カラーパレット ==================== */
+const PALETTE=[
+ {hex:'#666666',name:'えんぴつグレー（白黒印刷に最適）'},
+ {hex:'#333333',name:'やわらかブラック'},
+ {hex:'#4a7c59',name:'若草・フォレストグリーン'},
+ {hex:'#d96b82',name:'サクラ・やさしいピンク'},
+ {hex:'#3d7ea6',name:'空色・スカイブルー'},
+ {hex:'#d97724',name:'ひまわり・温かみオレンジ'},
+ {hex:'#2b3a4a',name:'クラシック・ネイビー'},
+ {hex:'#8a3324',name:'クラシック・えんじ'}
+];
+
+/* ==================== 状態 ==================== */
+const state={
+  count:8, orientation:'portrait',
+  frame:'round', color:'#4a7c59',
+  useTtl:true, title:'ありがとうございました', ruby:'', font:'maru',
+  useTo:true, to:'　　　　　　　の みなさまへ',
+  useNm:true, nm:'＿ねん ＿くみ なまえ（　　　　　）',
+  useDraw:false, drawH:26,
+  body:'hline', rows:4, rowsAuto:true, gap:'m', lineStyle:'solid', cell:14, leader:true,
+  cut:true
+};
+
+/* ==================== 色の計算 ==================== */
+const hex2rgb=h=>{h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');
+  return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];};
+const rgb2hex=r=>'#'+r.map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0')).join('');
+const mix=(a,b,t)=>{const A=hex2rgb(a),B=hex2rgb(b);return rgb2hex(A.map((v,i)=>v+(B[i]-v)*t));};
+
+/* ==================== UI ==================== */
+function seg(id,v,cb){const e=document.getElementById(id);
+  [...e.children].forEach(b=>{b.classList.toggle('on',b.dataset.v===String(v));b.onclick=()=>cb(b.dataset.v);});}
+
+function buildFrames(){
+  [1,2,3,4].forEach(g=>{
+    const w=document.getElementById('fg'+g);w.innerHTML='';
+    FRAMES.filter(f=>f.g===g).forEach(f=>{
+      const b=document.createElement('button');
+      b.className=f.id===state.frame?'on':''; b.title=f.name;
+      b.innerHTML=`<div class="fprev">${framePreview(f)}</div>${f.name}`;
+      b.onclick=()=>{state.frame=f.id;buildFrames();render();};
+      w.appendChild(b);
+    });
+  });
+}
+function framePreview(f){
+  const W=60,H=40;                              // プレビュー用の仮の mm
+  const css=`--ac:${state.color};--soft:${mix(state.color,'#ffffff',.55)};--pale:${mix(state.color,'#ffffff',.78)};--pale2:${mix(state.color,'#ffffff',.9)}`;
+  if(f.kind==='svg')
+    return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="${css}">${f.draw(W,H)}</svg>`;
+  return `<div class="pv f-${f.id}" style="${css};position:absolute;inset:2px">${f.extra||''}</div>`;
+}
+function buildPal(){
+  const w=document.getElementById('pal');w.innerHTML='';
+  PALETTE.forEach(c=>{const b=document.createElement('button');b.style.background=c.hex;b.title=c.name;
+    if(c.hex.toLowerCase()===state.color.toLowerCase())b.classList.add('on');
+    b.onclick=()=>{state.color=c.hex;document.getElementById('custom').value=c.hex;buildPal();buildFrames();render();};
+    w.appendChild(b);});
+  const p=PALETTE.find(c=>c.hex.toLowerCase()===state.color.toLowerCase());
+  document.getElementById('colorName').textContent=p?p.name:'カスタム '+state.color;
+}
+
+function sync(){
+  seg('segCount',state.count,v=>{state.count=+v;state.rowsAuto=true;sync();render();});
+  seg('segOri',state.orientation,v=>{state.orientation=v;state.rowsAuto=true;sync();render();});
+  seg('segFont',state.font,v=>{state.font=v;sync();render();});
+  seg('segBody',state.body,v=>{state.body=v;sync();render();});
+  seg('segGap',state.gap,v=>{state.gap=v;state.rowsAuto=true;sync();render();});
+  seg('segLineStyle',state.lineStyle,v=>{state.lineStyle=v;sync();render();});
+  const isH=state.body==='hline', isG=state.body==='vgrid', isV=state.body==='vline';
+  show('rowRows',isH); show('rowGap',isH); show('rowStyle',isH);
+  show('rowCell',isG||isV); show('rowLeader',isG,'flex');
+  document.getElementById('lblCell').textContent=isG?'マスの大きさ':'行の幅';
+  show('rowTtl',state.useTtl); show('rowRuby',state.useTtl);
+  show('rowTo',state.useTo); show('rowNm',state.useNm); show('rowDraw',state.useDraw);
+  document.getElementById('valRows').textContent=state.rows+'行';
+  document.getElementById('valCell').textContent=state.cell.toFixed(1)+'mm';
+  document.getElementById('valDraw').textContent=state.drawH+'mm';
+  document.getElementById('rngRows').value=state.rows;
+  document.getElementById('rngCell').value=state.cell;
+  document.getElementById('rngDraw').value=state.drawH;
+  document.getElementById('title').value=state.title;
+  document.getElementById('ruby').value=state.ruby;
+  document.getElementById('to').value=state.to;
+  document.getElementById('nm').value=state.nm;
+}
+const show=(id,on,disp)=>document.getElementById(id).style.display=on?(disp||'flex'):'none';
+
+/* ==================== 面付け ==================== */
+const LAY={8:{c:2,r:4},6:{c:2,r:3},4:{c:2,r:2},2:{c:1,r:2}};
+const sheetMm=()=>state.orientation==='landscape'?{w:281,h:194}:{w:194,h:281};
+function layout(){const l=LAY[state.count];
+  return state.orientation==='landscape'?{c:l.r,r:l.c}:{c:l.c,r:l.r};}
+
+/* ==================== 描画 ==================== */
+function render(){
+  const S=sheetMm(), L=layout(), f=FRAME(state.frame);
+  document.getElementById('pageStyle').textContent=`@page{size:A4 ${state.orientation};margin:8mm;}`;
+
+  const page=document.getElementById('page');
+  page.style.width=(state.orientation==='landscape'?297:210)+'mm';
+  page.style.height=(state.orientation==='landscape'?210:297)+'mm';
+
+  const sheet=document.getElementById('sheet');
+  sheet.style.width=S.w+'mm'; sheet.style.height=S.h+'mm';
+  sheet.style.gridTemplateColumns=`repeat(${L.c},1fr)`;
+  sheet.style.gridTemplateRows=`repeat(${L.r},1fr)`;
+  Object.entries(colorVars()).forEach(([k,v])=>sheet.style.setProperty(k,v));
+  sheet.innerHTML='';
+
+  const cw=S.w/L.c, ch=S.h/L.r;
+  document.getElementById('sizeNote').textContent=
+    `カード1枚＝ 約 ${cw.toFixed(0)}mm × ${ch.toFixed(0)}mm（${L.c}列 × ${L.r}段 ＝ ${L.c*L.r}枚）`;
+
+  const html=buildCard(cw,ch,f);
+  for(let i=0;i<L.c*L.r;i++){
+    const cell=document.createElement('div');cell.className='cell';cell.innerHTML=html;sheet.appendChild(cell);
+  }
+  /* 本文は実際に残った領域を測ってから流し込む（推定だと行がはみ出す） */
+  const bd0=sheet.querySelector('.bd');
+  const body=makeBody(bd0.offsetWidth*25.4/96, bd0.offsetHeight*25.4/96);
+  sheet.querySelectorAll('.bd').forEach(el=>el.innerHTML=body.html);
+
+  if(state.cut){
+    for(let i=1;i<L.r;i++){const d=document.createElement('div');d.className='cut h';
+      d.style.top=(i*ch)+'mm';d.innerHTML='<span class="sc">&#9986;</span>';sheet.appendChild(d);}
+    for(let i=1;i<L.c;i++){const d=document.createElement('div');d.className='cut v';
+      d.style.left=(i*cw)+'mm';d.innerHTML='<span class="sc">&#9986;</span>';sheet.appendChild(d);}
+  }
+  const w=document.getElementById('warn');
+  if(body.note){w.textContent=body.note;w.style.display='block';}else{w.style.display='none';}
+  fit();
+}
+
+function colorVars(){
+  const c=state.color;
+  return {'--ac':c,
+          '--soft':mix(c,'#ffffff',.5),
+          '--pale':mix(c,'#ffffff',.72),
+          '--pale2':mix(c,'#ffffff',.88),
+          '--rule':mix(c,'#8d8d8d',.55),
+          '--rule2':mix(c,'#6f6f6f',.5),
+          '--lead':mix(c,'#c9c9c9',.75)};
+}
+
+function buildCard(cw,ch,f){
+  const fw=cw-4, fh=ch-4;
+  const pad=Math.max(2.6,Math.min(5,fw*0.055))+f.pad;
+  const aw=fw-pad*2;
+
+  /* 見出し・記入欄は必ず1行に収まるようフォントを逆算 */
+  let tF=clamp(3.0, ch*0.088, 7.2);
+  const tLen=Math.max(1,[...state.title.trim()].length);
+  tF=Math.max(2.2, Math.min(tF, aw/(tLen*1.04)));
+  let sF=clamp(2.2, tF*0.52, 3.9);
+  const sLen=Math.max(1, Math.max([...state.to].length+2, [...state.nm].length));
+  sF=Math.max(1.8, Math.min(sF, aw/(sLen*1.02)));
+  const rF=sF*0.8;
+
+  let html='';
+  if(state.useTtl && state.title.trim()){
+    const inner=state.ruby.trim()
+      ? `<ruby>${esc(state.title)}<rt style="font-size:${rF}mm">${esc(state.ruby)}</rt></ruby>`
+      : esc(state.title);
+    html+=`<div class="ttl" style="font-size:${tF}mm;padding-bottom:${tF*0.42}mm"><span class="tt">${inner}</span></div>`;
+  }
+  if(state.useTo && state.to.trim())
+    html+=`<div class="to" style="font-size:${sF}mm;padding-bottom:${sF*0.6}mm"><u>${esc(state.to)}</u></div>`;
+
+  html+=`<div class="bd"></div>`;
+
+  if(state.useNm && state.nm.trim())
+    html+=`<div class="nm" style="font-size:${sF}mm;padding-top:${sF*0.5}mm">${esc(state.nm)}</div>`;
+
+  const svg = f.kind==='svg'
+    ? `<svg class="fsvg" viewBox="0 0 ${fw.toFixed(2)} ${fh.toFixed(2)}" preserveAspectRatio="none">${f.draw(fw,fh)}</svg>` : '';
+  const font=state.font==='maru'?'var(--f-maru)':'var(--f-kyoka)';
+  return `<div class="cardbox f-${f.kind==='css'?f.id:'none'}" style="padding:${pad}mm;font-family:${font}">`
+       + svg + (f.extra||'') + html + `</div>`;
+}
+
+/* 本文エリア（bw/bh は実測 mm） */
+function makeBody(bw,bh){
+  let note='', head='', rest=bh;
+  if(state.useDraw){
+    const dh=Math.min(state.drawH, bh*0.62);
+    if(dh<state.drawH-0.05) note=`イラスト枠を ${dh.toFixed(0)}mm に自動調整しました`;
+    head=`<div class="draw" style="height:${dh}mm;font-size:${clamp(2.6,dh*0.16,4.2)}mm;margin-bottom:1.6mm">絵</div>`;
+    rest=bh-dh-1.6;
+  }
+  let inner='';
+  if(state.body==='hline'){
+    const base={s:7,m:9,l:11.5}[state.gap];
+    /* 面付けや行幅を変えた直後は、行数をカードいっぱいに自動でそろえる
+       （行数スライダーを動かしたらその値を優先） */
+    if(state.rowsAuto){
+      state.rows=clamp(2, Math.floor((rest-0.3)/base), 10);
+      document.getElementById('rngRows').value=state.rows;
+      document.getElementById('valRows').textContent=state.rows+'行';
+    }
+    const lh=Math.min(base,(rest-0.3)/state.rows);
+    if(lh<base-0.05) note=note||`行幅を ${lh.toFixed(1)}mm に自動調整しました（${state.rows}行を収めるため）`;
+    let li=''; for(let i=0;i<state.rows;i++) li+=`<i style="height:${lh}mm"></i>`;
+    inner=`<div class="hl ${state.lineStyle}">${li}</div>`;
+  }else if(state.body==='vgrid'){
+    const cell=Math.min(state.cell, rest/2, bw/2);
+    if(cell<state.cell-0.05) note=note||`マスを ${cell.toFixed(1)}mm に自動調整しました`;
+    const cols=Math.max(1,Math.floor((bw+0.2)/cell)), rows=Math.max(1,Math.floor((rest+0.2)/cell));
+    let cs=''; for(let i=0;i<cols*rows;i++) cs+=`<div class="gcell${state.leader?' leader':''}"></div>`;
+    inner=`<div class="vcenter"><div class="gridwrap" style="grid-template-columns:repeat(${cols},${cell}mm);grid-auto-rows:${cell}mm">${cs}</div></div>`;
+  }else if(state.body==='vline'){
+    const lw=Math.min(state.cell,bw/2), cols=Math.max(1,Math.floor((bw+0.2)/lw));
+    let li=''; for(let i=0;i<cols;i++) li+=`<i style="width:${lw}mm"></i>`;
+    inner=`<div class="vcenter"><div class="vl" style="height:${Math.max(4,rest-0.4)}mm">${li}</div></div>`;
+  }
+  return {note, html:head+inner};
+}
+
+const clamp=(lo,v,hi)=>Math.max(lo,Math.min(hi,v));
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ==================== 拡大縮小 ==================== */
+function fit(){
+  const MM=96/25.4, pw=state.orientation==='landscape'?297:210, ph=state.orientation==='landscape'?210:297;
+  const avail=document.getElementById('previewWrap').clientWidth-56;
+  const s=Math.min(1.15, avail/(pw*MM));
+  document.getElementById('page').style.transform='scale('+s+')';
+  const h=document.getElementById('holder');
+  h.style.width=(pw*MM*s)+'px'; h.style.height=(ph*MM*s)+'px';
+}
+window.addEventListener('resize',fit);
+
+/* ==================== イベント ==================== */
+const on=(id,ev,fn)=>document.getElementById(id).addEventListener(ev,fn);
+['title','ruby','to','nm'].forEach(k=>on(k,'input',e=>{state[k]=e.target.value;render();}));
+['useTtl','useTo','useNm','useDraw'].forEach(k=>on(k,'change',e=>{state[k]=e.target.checked;state.rowsAuto=true;sync();render();}));
+on('leader','change',e=>{state.leader=e.target.checked;render();});
+on('cut','change',e=>{state.cut=e.target.checked;render();});
+on('rngRows','input',e=>{state.rows=+e.target.value;state.rowsAuto=false;sync();render();});
+on('rngCell','input',e=>{state.cell=+e.target.value;sync();render();});
+on('rngDraw','input',e=>{state.drawH=+e.target.value;state.rowsAuto=true;sync();render();});
+on('custom','input',e=>{state.color=e.target.value;buildPal();buildFrames();render();});
+
+buildFrames(); buildPal(); sync(); render();
+</script>
+</body>
+</html>
