@@ -69,53 +69,54 @@ input[type=range]{flex:1;accent-color:var(--blue)}
              linear-gradient(90deg,rgba(0,0,0,.02) 1px,transparent 1px) 0 0/22px 22px,#f2f5f9}
 .holder{position:relative}
 .page{background:#fff;transform-origin:top center;box-shadow:0 6px 28px rgba(20,60,110,.18);padding:8mm}
+:root{--mm:1mm}
 .print-sheet{position:relative;display:grid;overflow:hidden}
 
 /* ============ カード ============ */
-.cell{position:relative;overflow:hidden;padding:2mm}
+.cell{position:relative;overflow:hidden;padding:calc(2*var(--mm))}
 .cardbox{position:relative;width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden}
 .fsvg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 
 /* --- CSSでつくる枠 --- */
-.f-round{border:.5mm solid var(--ac);border-radius:2.6mm}
-.f-double{border:1.3mm double var(--ac);border-radius:1.6mm}
-.f-stitch{border:.45mm solid var(--ac);border-radius:2.6mm}
-.f-stitch::after{content:"";position:absolute;inset:1.3mm;border:.3mm dashed var(--ac);border-radius:1.8mm;opacity:.75;pointer-events:none}
-.f-tape{border:.35mm solid var(--soft);border-radius:2.2mm}
-.tape{position:absolute;top:0.7mm;left:50%;width:34%;height:5.4mm;transform:translateX(-50%) rotate(-1.6deg);
-  background:repeating-linear-gradient(115deg,var(--pale) 0 2.2mm,var(--pale2) 2.2mm 4.4mm);
-  border-left:.3mm solid var(--soft);border-right:.3mm solid var(--soft);opacity:.95;pointer-events:none}
+.f-round{border:calc(.5*var(--mm)) solid var(--ac);border-radius:calc(2.6*var(--mm))}
+.f-double{border:calc(1.3*var(--mm)) double var(--ac);border-radius:calc(1.6*var(--mm))}
+.f-stitch{border:calc(.45*var(--mm)) solid var(--ac);border-radius:calc(2.6*var(--mm))}
+.f-stitch::after{content:"";position:absolute;inset:calc(1.3*var(--mm));border:calc(.3*var(--mm)) dashed var(--ac);border-radius:calc(1.8*var(--mm));opacity:.75;pointer-events:none}
+.f-tape{border:calc(.35*var(--mm)) solid var(--soft);border-radius:calc(2.2*var(--mm))}
+.tape{position:absolute;top:calc(0.7*var(--mm));left:50%;width:34%;height:calc(5.4*var(--mm));transform:translateX(-50%) rotate(-1.6deg);
+  background:repeating-linear-gradient(115deg,var(--pale) 0 calc(2.2*var(--mm)),var(--pale2) calc(2.2*var(--mm)) calc(4.4*var(--mm)));
+  border-left:calc(.3*var(--mm)) solid var(--soft);border-right:calc(.3*var(--mm)) solid var(--soft);opacity:.95;pointer-events:none}
 .f-none{border:0}
 
-.ttl{display:flex;align-items:center;justify-content:center;gap:1.6mm;flex:0 0 auto;text-align:center;line-height:1.15;overflow:hidden;position:relative;z-index:1}
+.ttl{display:flex;align-items:center;justify-content:center;gap:calc(1.6*var(--mm));flex:0 0 auto;text-align:center;line-height:1.15;overflow:hidden;position:relative;z-index:1}
 .tt{color:var(--ac);font-weight:700;letter-spacing:.04em;white-space:nowrap}
 .tt rt{font-weight:400;letter-spacing:0;white-space:nowrap}
 .to{flex:0 0 auto;white-space:nowrap;overflow:hidden;color:#333;position:relative;z-index:1}
-.to u{text-decoration:none;border-bottom:.35mm solid var(--soft);padding:0 .4em}
+.to u{text-decoration:none;border-bottom:calc(.35*var(--mm)) solid var(--soft);padding:0 .4em}
 .nm{flex:0 0 auto;text-align:right;white-space:nowrap;overflow:hidden;color:#333;position:relative;z-index:1}
 .bd{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;overflow:hidden;position:relative;z-index:1}
 
-.draw{border:.45mm dashed var(--soft);border-radius:1.8mm;display:flex;align-items:center;justify-content:center;color:var(--soft);flex:0 0 auto}
+.draw{border:calc(.45*var(--mm)) dashed var(--soft);border-radius:calc(1.8*var(--mm));display:flex;align-items:center;justify-content:center;color:var(--soft);flex:0 0 auto}
 .hl{width:100%}
 .hl i{display:block;width:100%}
-.hl.solid i{border-bottom:.28mm solid var(--rule)}
-.hl.dot i{border-bottom:.45mm dotted var(--rule)}
+.hl.solid i{border-bottom:calc(.28*var(--mm)) solid var(--rule)}
+.hl.dot i{border-bottom:calc(.45*var(--mm)) dotted var(--rule)}
 .vcenter{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
-.gridwrap{border-top:.35mm solid var(--rule2);border-left:.35mm solid var(--rule2);display:grid}
-.gcell{border-right:.28mm solid var(--rule2);border-bottom:.28mm solid var(--rule2);background-repeat:no-repeat;background-position:center center}
-.gcell.leader{background-image:repeating-linear-gradient(var(--lead) 0 .9mm,transparent .9mm 1.8mm),
-                                repeating-linear-gradient(90deg,var(--lead) 0 .9mm,transparent .9mm 1.8mm);
-  background-size:.2mm 100%,100% .2mm}
-.vl{display:flex;flex-direction:row-reverse;border-top:.35mm solid var(--rule2);border-bottom:.35mm solid var(--rule2);border-right:.35mm solid var(--rule2)}
-.vl i{display:block;height:100%;border-left:.28mm solid var(--rule)}
+.gridwrap{border-top:calc(.35*var(--mm)) solid var(--rule2);border-left:calc(.35*var(--mm)) solid var(--rule2);display:grid}
+.gcell{border-right:calc(.28*var(--mm)) solid var(--rule2);border-bottom:calc(.28*var(--mm)) solid var(--rule2);background-repeat:no-repeat;background-position:center center}
+.gcell.leader{background-image:repeating-linear-gradient(var(--lead) 0 calc(.9*var(--mm)),transparent calc(.9*var(--mm)) calc(1.8*var(--mm))),
+                                repeating-linear-gradient(90deg,var(--lead) 0 calc(.9*var(--mm)),transparent calc(.9*var(--mm)) calc(1.8*var(--mm)));
+  background-size:calc(.2*var(--mm)) 100%,100% calc(.2*var(--mm))}
+.vl{display:flex;flex-direction:row-reverse;border-top:calc(.35*var(--mm)) solid var(--rule2);border-bottom:calc(.35*var(--mm)) solid var(--rule2);border-right:calc(.35*var(--mm)) solid var(--rule2)}
+.vl i{display:block;height:100%;border-left:calc(.28*var(--mm)) solid var(--rule)}
 
 /* 切り取りガイド */
 .cut{position:absolute;pointer-events:none;color:#9aa7b5}
-.cut.h{left:0;width:100%;border-top:.4mm dashed #b7c2ce}
-.cut.v{top:0;height:100%;border-left:.4mm dashed #b7c2ce}
-.cut .sc{position:absolute;font-size:3.4mm;line-height:1}
-.cut.h .sc{left:-.5mm;top:-2mm}
-.cut.v .sc{top:-.5mm;left:-2mm}
+.cut.h{left:0;width:100%;border-top:calc(.4*var(--mm)) dashed #b7c2ce}
+.cut.v{top:0;height:100%;border-left:calc(.4*var(--mm)) dashed #b7c2ce}
+.cut .sc{position:absolute;font-size:calc(3.4*var(--mm));line-height:1}
+.cut.h .sc{left:calc(-.5*var(--mm));top:calc(-2*var(--mm))}
+.cut.v .sc{top:calc(-.5*var(--mm));left:calc(-2*var(--mm))}
 
 .warn{position:fixed;left:376px;bottom:16px;background:#fff4e2;border:1px solid #f0d9ae;color:#8a5608;font-size:12px;padding:8px 12px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
 
@@ -124,11 +125,12 @@ input[type=range]{flex:1;accent-color:var(--blue)}
   html,body{height:auto;overflow:visible}
   body{margin:0;padding:0;background:#fff}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .app{display:block;height:auto}
   .control-panel,.no-print,.warn{display:none!important}
   .preview{padding:0;overflow:visible;display:block;background:#fff}
   .holder{width:auto!important;height:auto!important}
-  .page{padding:0;box-shadow:none;transform:none!important;width:auto!important;height:auto!important}
-  .print-sheet{width:100%;height:100%;page-break-after:avoid;break-after:avoid;page-break-inside:avoid;break-inside:avoid}
+  .page{container-type:inline-size;padding:0;box-shadow:none;transform:none!important;width:auto!important;height:auto!important}
+  .print-sheet{margin:0;page-break-after:avoid;break-after:avoid;page-break-inside:avoid;break-inside:avoid}
 }
 </style>
 </head>
@@ -381,14 +383,14 @@ function layout(){const l=LAY[state.count];
 /* ==================== 描画 ==================== */
 function render(){
   const S=sheetMm(), L=layout(), f=FRAME(state.frame);
-  document.getElementById('pageStyle').textContent=`@page{size:A4 ${state.orientation};margin:8mm;}`;
+  document.getElementById('pageStyle').textContent=`@page{size:A4 ${state.orientation};margin:8mm;}@media print{.print-sheet{--mm:calc(100cqw/${S.w+3})}}`;
 
   const page=document.getElementById('page');
   page.style.width=(state.orientation==='landscape'?297:210)+'mm';
   page.style.height=(state.orientation==='landscape'?210:297)+'mm';
 
   const sheet=document.getElementById('sheet');
-  sheet.style.width=S.w+'mm'; sheet.style.height=S.h+'mm';
+  sheet.style.width=`calc(${S.w}*var(--mm))`; sheet.style.height=`calc(${S.h}*var(--mm))`;
   sheet.style.gridTemplateColumns=`repeat(${L.c},1fr)`;
   sheet.style.gridTemplateRows=`repeat(${L.r},1fr)`;
   Object.entries(colorVars()).forEach(([k,v])=>sheet.style.setProperty(k,v));
@@ -409,9 +411,9 @@ function render(){
 
   if(state.cut){
     for(let i=1;i<L.r;i++){const d=document.createElement('div');d.className='cut h';
-      d.style.top=(i*ch)+'mm';d.innerHTML='<span class="sc">&#9986;</span>';sheet.appendChild(d);}
+      d.style.top=`calc(${i*ch}*var(--mm))`;d.innerHTML='<span class="sc">&#9986;</span>';sheet.appendChild(d);}
     for(let i=1;i<L.c;i++){const d=document.createElement('div');d.className='cut v';
-      d.style.left=(i*cw)+'mm';d.innerHTML='<span class="sc">&#9986;</span>';sheet.appendChild(d);}
+      d.style.left=`calc(${i*cw}*var(--mm))`;d.innerHTML='<span class="sc">&#9986;</span>';sheet.appendChild(d);}
   }
   const w=document.getElementById('warn');
   if(body.note){w.textContent=body.note;w.style.display='block';}else{w.style.display='none';}
@@ -446,22 +448,22 @@ function buildCard(cw,ch,f){
   let html='';
   if(state.useTtl && state.title.trim()){
     const inner=state.ruby.trim()
-      ? `<ruby>${esc(state.title)}<rt style="font-size:${rF}mm">${esc(state.ruby)}</rt></ruby>`
+      ? `<ruby>${esc(state.title)}<rt style="font-size:calc(${rF}*var(--mm))">${esc(state.ruby)}</rt></ruby>`
       : esc(state.title);
-    html+=`<div class="ttl" style="font-size:${tF}mm;padding-bottom:${tF*0.42}mm"><span class="tt">${inner}</span></div>`;
+    html+=`<div class="ttl" style="font-size:calc(${tF}*var(--mm));padding-bottom:calc(${tF*0.42}*var(--mm))"><span class="tt">${inner}</span></div>`;
   }
   if(state.useTo && state.to.trim())
-    html+=`<div class="to" style="font-size:${sF}mm;padding-bottom:${sF*0.6}mm"><u>${esc(state.to)}</u></div>`;
+    html+=`<div class="to" style="font-size:calc(${sF}*var(--mm));padding-bottom:calc(${sF*0.6}*var(--mm))"><u>${esc(state.to)}</u></div>`;
 
   html+=`<div class="bd"></div>`;
 
   if(state.useNm && state.nm.trim())
-    html+=`<div class="nm" style="font-size:${sF}mm;padding-top:${sF*0.5}mm">${esc(state.nm)}</div>`;
+    html+=`<div class="nm" style="font-size:calc(${sF}*var(--mm));padding-top:calc(${sF*0.5}*var(--mm))">${esc(state.nm)}</div>`;
 
   const svg = f.kind==='svg'
     ? `<svg class="fsvg" viewBox="0 0 ${fw.toFixed(2)} ${fh.toFixed(2)}" preserveAspectRatio="none">${f.draw(fw,fh)}</svg>` : '';
   const font=state.font==='maru'?'var(--f-maru)':'var(--f-kyoka)';
-  return `<div class="cardbox f-${f.kind==='css'?f.id:'none'}" style="padding:${pad}mm;font-family:${font}">`
+  return `<div class="cardbox f-${f.kind==='css'?f.id:'none'}" style="padding:calc(${pad}*var(--mm));font-family:${font}">`
        + svg + (f.extra||'') + html + `</div>`;
 }
 
@@ -471,7 +473,7 @@ function makeBody(bw,bh){
   if(state.useDraw){
     const dh=Math.min(state.drawH, bh*0.62);
     if(dh<state.drawH-0.05) note=`イラスト枠を ${dh.toFixed(0)}mm に自動調整しました`;
-    head=`<div class="draw" style="height:${dh}mm;font-size:${clamp(2.6,dh*0.16,4.2)}mm;margin-bottom:1.6mm">絵</div>`;
+    head=`<div class="draw" style="height:calc(${dh}*var(--mm));font-size:calc(${clamp(2.6,dh*0.16,4.2)}*var(--mm));margin-bottom:calc(1.6*var(--mm))">絵</div>`;
     rest=bh-dh-1.6;
   }
   let inner='';
@@ -486,18 +488,18 @@ function makeBody(bw,bh){
     }
     const lh=Math.min(base,(rest-0.3)/state.rows);
     if(lh<base-0.05) note=note||`行幅を ${lh.toFixed(1)}mm に自動調整しました（${state.rows}行を収めるため）`;
-    let li=''; for(let i=0;i<state.rows;i++) li+=`<i style="height:${lh}mm"></i>`;
+    let li=''; for(let i=0;i<state.rows;i++) li+=`<i style="height:calc(${lh}*var(--mm))"></i>`;
     inner=`<div class="hl ${state.lineStyle}">${li}</div>`;
   }else if(state.body==='vgrid'){
     const cell=Math.min(state.cell, rest/2, bw/2);
     if(cell<state.cell-0.05) note=note||`マスを ${cell.toFixed(1)}mm に自動調整しました`;
     const cols=Math.max(1,Math.floor((bw+0.2)/cell)), rows=Math.max(1,Math.floor((rest+0.2)/cell));
     let cs=''; for(let i=0;i<cols*rows;i++) cs+=`<div class="gcell${state.leader?' leader':''}"></div>`;
-    inner=`<div class="vcenter"><div class="gridwrap" style="grid-template-columns:repeat(${cols},${cell}mm);grid-auto-rows:${cell}mm">${cs}</div></div>`;
+    inner=`<div class="vcenter"><div class="gridwrap" style="grid-template-columns:repeat(${cols},calc(${cell}*var(--mm)));grid-auto-rows:calc(${cell}*var(--mm))">${cs}</div></div>`;
   }else if(state.body==='vline'){
     const lw=Math.min(state.cell,bw/2), cols=Math.max(1,Math.floor((bw+0.2)/lw));
-    let li=''; for(let i=0;i<cols;i++) li+=`<i style="width:${lw}mm"></i>`;
-    inner=`<div class="vcenter"><div class="vl" style="height:${Math.max(4,rest-0.4)}mm">${li}</div></div>`;
+    let li=''; for(let i=0;i<cols;i++) li+=`<i style="width:calc(${lw}*var(--mm))"></i>`;
+    inner=`<div class="vcenter"><div class="vl" style="height:calc(${Math.max(4,rest-0.4)}*var(--mm))">${li}</div></div>`;
   }
   return {note, html:head+inner};
 }
