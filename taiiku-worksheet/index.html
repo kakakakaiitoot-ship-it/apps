@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>体育ワークシートメーカー（全学年）</title>
+<style id="pageStyle"></style>
 <style>
   :root{
     --ink:#1b2a3a; --line:#1b2a3a; --sub:#5b6b7b; --accent:#1565c0; --pale:#e8f1fb; --yellow:#fff7d6;
@@ -62,11 +63,17 @@
      ブラウザが印刷で拡大・縮小しても、はば192：高さ258の形のまま1ページに入る。 */
   .preview{flex:1;overflow:auto;padding:20px;position:relative}
   .sheet{width:100%;max-width:210mm;margin:0 auto 20px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.18);padding:6% 4.3% 7%}
+  .sheet.measure.land{width:1123px;padding:47.6px 34.1px 55.6px}
   .sheet.measure{position:absolute;left:0;top:0;width:794px;max-width:none;visibility:hidden;height:0;overflow:hidden;margin:0;box-shadow:none;padding:47.6px 34.1px 55.6px}
   .inner{container-type:inline-size;position:relative;width:100%;aspect-ratio:192/258}
   .measure .inner{aspect-ratio:auto}
   .card{position:absolute;inset:0;display:flex;flex-direction:column;gap:calc(2*var(--u));overflow:hidden;font-size:calc(10.5*var(--p));line-height:var(--lh,1.5)}
   .measure .card{position:static;display:flex;overflow:visible}
+  .sheet.land{max-width:297mm}
+  .sheet.land .inner{--u:calc(100cqw/277);--p:calc(100cqw/277*.3528);aspect-ratio:277/178}
+  .measure.land .inner{aspect-ratio:auto}
+  .cols{display:flex;gap:calc(6*var(--u));flex:1 1 auto;min-height:0}
+  .col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:calc(2*var(--u))}
   .pgno{position:absolute;right:0;bottom:calc(-5*var(--u));font-size:calc(7.5*var(--p));color:var(--sub)}
 
   /* ---------- 紙の中身 ---------- */
@@ -113,7 +120,6 @@
   .key li{margin-bottom:calc(1.4*var(--u))}
 
   @media print{
-    @page{size:A4 portrait;margin:8mm 9mm}
     html,body{height:auto}
     body{background:#fff}
     .app{display:block;height:auto}
@@ -159,6 +165,11 @@
     <div class="row"><label>単元名 <input type="text" id="titleIn" size="22" placeholder="（選んだ単元の名前）"></label></div>
     <div class="hint">ワークシートの題を、自分の言葉に書きかえられます（空にすると、選んだ単元の名前にもどります）。書きかえると、ふりがなは付きません。</div>
     <div class="row"><label>学年・組 <input type="text" id="klass" size="10" placeholder="3年2組"></label></div>
+    <div class="row"><label>用紙の向き
+      <select id="orient">
+        <option value="p">縦向き（1列）</option>
+        <option value="l">横向き（2列・項目をたくさん入れられます）</option>
+      </select></label></div>
     <div class="row"><label>記録・チェックの回数 <input type="number" id="times" min="2" max="8" value="5"> 回</label></div>
     <div class="row"><label>ふりがな
       <select id="rubyMode">
@@ -170,7 +181,7 @@
     <div class="hint">答えのページは、最後の1枚です。子どもに配るときは、そのページをはずして印刷してください。</div>
 
     <div class="btns"><button class="primary" id="print">印刷する（PDFにもできます）</button></div>
-    <p class="hint">印刷ウィンドウで、用紙サイズ「A4」、倍率「100％」にします。</p>
+    <p class="hint">印刷ウィンドウで、用紙サイズ「A4」、倍率「100％」にします。横向きのときは、向きが「横」になっているかも見てください（自動で切りかわらない場合は、印刷ウィンドウで「横」を選びます）。</p>
 
     <details class="about">
       <summary>このワークシートについて</summary>
@@ -190,7 +201,7 @@ var KEY="taiiku-worksheet-v1";
 var GROUPS=[{k:'k',n:'知識・技能'},{k:'s',n:'思考・判断・表現'},{k:'t',n:'主体的に学習に取り組む態度'}];
 var BADGE={c:'技',rec:'技',q:'知',qa:'知',w:'思',r:'態'};
 var BAND={1:'1-2',2:'1-2',3:'3-4',4:'3-4',5:'5-6',6:'5-6'};
-var S={grade:3,unit:null,klass:'',times:5,rubyMode:'auto',withKey:false,saved:{},titles:{}};
+var S={grade:3,unit:null,klass:'',times:5,rubyMode:'auto',withKey:false,saved:{},titles:{},orient:'p'};
 
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function plain(s){return String(s).replace(/\{([^|}]+)\|[^|}]+\|\d\}/g,'$1');}
@@ -205,7 +216,7 @@ function unitsOf(g){return DATA.units.filter(function(u){return u.band===BAND[g]
 function unitById(id){return DATA.units.filter(function(u){return u.id===id;})[0];}
 
 /* ---- 保存（選んだ項目だけ。氏名などは入れない） ---- */
-function load(){try{var r=localStorage.getItem(KEY);if(r){var o=JSON.parse(r);['grade','unit','klass','times','rubyMode','withKey','saved','titles'].forEach(function(k){if(o[k]!=null)S[k]=o[k];});}}catch(e){}}
+function load(){try{var r=localStorage.getItem(KEY);if(r){var o=JSON.parse(r);['grade','unit','klass','times','rubyMode','withKey','saved','titles','orient'].forEach(function(k){if(o[k]!=null)S[k]=o[k];});}}catch(e){}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 function clone(o){return JSON.parse(JSON.stringify(o));}
 function items(){
@@ -329,43 +340,62 @@ function keyHtml(){
   return '<div class="key"><h3>先生用の答え　'+(S.titles[u.id]&&S.titles[u.id].trim()?esc(S.titles[u.id].trim()):esc(plain(u.name)))+'</h3><p>子どもに配るページではありません。記入例は目安です。ほかの正しい答えもみとめてください。</p><ol>'+li+'</ol></div>';
 }
 
-/* ---- ページに分ける（高さは紙のはば÷192を1とした比で測る） ---- */
+/* ---- ページに分ける（高さは紙のはばを基準にした比で測る。縦は192、横は277が1枚のはば） ---- */
 function render(){
   var pv=$('#preview'); pv.innerHTML='';
   var u=unitById(S.unit); if(!u) return;
+  var land=S.orient==='l', W=land?277:192, H=land?178:258;
   var lh=S.rubyMode==='none'?1.5:1.85;
+  var ps=$('#pageStyle'); if(ps) ps.textContent='@media print{@page{size:A4 '+(land?'landscape':'portrait')+';margin:8mm 9mm}}';
   var blocks=buildBlocks();
-  // 測る
-  var m=document.createElement('div'); m.className='sheet measure'; pv.appendChild(m);
+  var goal=blocks.shift();                     // 「単元のめあて」は先頭の全幅の行
+  var m=document.createElement('div'); m.className='sheet measure'+(land?' land':''); pv.appendChild(m);
   var inn=document.createElement('div'); inn.className='inner'; m.appendChild(inn);
   var card=document.createElement('div'); card.className='card'; card.style.setProperty('--lh',lh); inn.appendChild(card);
-  function meas(html){ card.innerHTML=html; var e=card.firstElementChild; return e.getBoundingClientRect().height; }
-  var w=inn.getBoundingClientRect().width, unit=w/192;
-  var gap=2*unit, cap=258*unit-4*unit;
-  var hFull=meas(headHtml(false)), hMini=meas(headHtml(true));
-  blocks.forEach(function(b){ b.h=meas(b.html); });
-  var pages=[], cur=[], used=hFull;
-  blocks.forEach(function(b,i){
-    var add=b.h+gap;
-    if(used+add>cap && cur.length){ pages.push(cur); cur=[]; used=hMini+gap; }
-    cur.push(b); used+=add;
-  });
-  pages.push(cur);
+  function meas(html,full){ card.style.width=(land&&!full)?'calc((100cqw - 6*100cqw/277)/2)':''; card.innerHTML=html; return card.firstElementChild.getBoundingClientRect().height; }
+  var w=inn.getBoundingClientRect().width, unit=w/W;
+  var gap=2*unit, capH=H*unit-4*unit;
+  var hFull=meas(headHtml(false),true), hMini=meas(headHtml(true),true), hGoal=meas(goal.html,true);
+  blocks.forEach(function(b){ b.h=meas(b.html,false); });
+  var pages=[];
+  if(!land){
+    var cur=[goal], used=hFull+gap+hGoal;
+    blocks.forEach(function(b){
+      var add=b.h+gap;
+      if(used+add>capH && cur.length){ pages.push({blocks:cur}); cur=[]; used=hMini+gap; }
+      cur.push(b); used+=add;
+    });
+    pages.push({blocks:cur});
+  }else{
+    var pg={cols:[[],[]]}, ci=0, used2=0, avail=capH-hFull-gap-hGoal-gap;
+    blocks.forEach(function(b){
+      var add=b.h+gap;
+      if(used2+add>avail && used2>0){
+        ci++; used2=0;
+        if(ci>1){ pages.push(pg); pg={cols:[[],[]]}; ci=0; avail=capH-hMini-gap; }
+      }
+      pg.cols[ci].push(b); used2+=add;
+    });
+    pages.push(pg);
+  }
   pv.removeChild(m);
   // 描く
   pages.forEach(function(p,i){
-    var s=document.createElement('div'); s.className='sheet';
-    s.innerHTML='<div class="inner"><div class="card" style="--lh:'+lh+'">'+headHtml(i>0)+p.map(function(b){return b.html;}).join('')+'</div><div class="pgno">'+(i+1)+' / '+pages.length+'</div></div>';
-    pv.appendChild(s);
+    var sh=document.createElement('div'); sh.className='sheet'+(land?' land':'');
+    var body;
+    if(!land) body=headHtml(i>0)+p.blocks.map(function(b){return b.html;}).join('');
+    else body=headHtml(i>0)+(i===0?goal.html:'')+'<div class="cols">'+p.cols.map(function(c){return '<div class="col">'+c.map(function(b){return b.html;}).join('')+'</div>';}).join('')+'</div>';
+    sh.innerHTML='<div class="inner"><div class="card" style="--lh:'+lh+'">'+body+'</div><div class="pgno">'+(i+1)+' / '+pages.length+'</div></div>';
+    pv.appendChild(sh);
   });
   if(S.withKey){
-    var s2=document.createElement('div'); s2.className='sheet';
+    var s2=document.createElement('div'); s2.className='sheet'+(land?' land':'');
     s2.innerHTML='<div class="inner"><div class="card" style="--lh:1.6">'+keyHtml()+'</div></div>';
     pv.appendChild(s2);
   }
   var info=$('#pagesInfo'), n=pages.length;
-  info.className='pages-info'+(n>1?' over':'');
   fitPages=n;
+  info.className='pages-info'+(n>1?' over':'');
   info.textContent = n===1 ? 'いまの選び方で、A4 1枚に入っています。' : 'いまの選び方だと、A4 '+n+'枚になります。1枚にしたいときは、項目を減らしてください。';
 }
 
@@ -385,6 +415,17 @@ function fit(){
     else break;
     pick.on=false; render();
   }
+}
+function fillUp(){
+  var its=items(); render();
+  if(fitPages>1) return;
+  var order=['q','qa','c','r','w'];
+  order.forEach(function(t){
+    its.filter(function(i){return !i.on&&i.t===t&&!i.ruled;}).forEach(function(i){
+      i.on=true; render();
+      if(fitPages>1){ i.on=false; render(); }
+    });
+  });
 }
 function refresh(){ items(); if(needFit){ needFit=false; fit(); } save(); renderItems(); render(); }
 function selectGrade(g){
@@ -437,8 +478,9 @@ $('#items').addEventListener('input',function(e){
   if(e.target.matches('input[type=text]')){ commitEdit(e.target); save(); render(); } });
 $('#items').addEventListener('focusout',function(e){ if(e.target.matches('input[type=text]')){ editing=null; setTimeout(renderItems,0); } });
 $('#items').addEventListener('keydown',function(e){ if(e.key==='Enter'&&e.target.matches('input[type=text]')){ e.target.blur(); } });
-$('#resetItems').onclick=function(){ var u=unitById(S.unit); S.saved[u.id]=clone(u.items); needFit=true; editing=null; refresh(); };
+$('#resetItems').onclick=function(){ var u=unitById(S.unit); S.saved[u.id]=clone(u.items); needFit=true; editing=null; refresh(); if(S.orient==='l'){ fillUp(); refresh(); } };
 $('#allOff').onclick=function(){ items().forEach(function(i){i.on=false;}); refresh(); };
+$('#orient').addEventListener('change',function(){ S.orient=this.value; if(S.orient==='l'){ fillUp(); } else { fit(); } refresh(); });
 $('#klass').addEventListener('input',function(){ S.klass=this.value; save(); render(); });
 $('#titleIn').addEventListener('input',function(){ S.titles[S.unit]=this.value; save(); render(); });
 function syncTitle(){ var u=unitById(S.unit); $('#titleIn').value=(S.titles[S.unit]||''); $('#titleIn').placeholder=u?plain(u.name):''; }
@@ -449,7 +491,7 @@ $('#print').onclick=function(){ window.print(); };
 
 load();
 if(!unitById(S.unit)||unitsOf(S.grade).indexOf(unitById(S.unit))<0){ var us0=unitsOf(S.grade); S.unit=us0[0].id; }
-$('#klass').value=S.klass; $('#times').value=S.times; $('#rubyMode').value=S.rubyMode; $('#withKey').checked=S.withKey;
+$('#orient').value=S.orient; $('#klass').value=S.klass; $('#times').value=S.times; $('#rubyMode').value=S.rubyMode; $('#withKey').checked=S.withKey;
 items(); if(needFit){ needFit=false; fit(); }
 syncTitle(); renderGrade(); renderUnit(); renderItems(); render();
 window.addEventListener('resize',function(){ clearTimeout(window.__rt); window.__rt=setTimeout(render,150); });
