@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>じゅんびうんどう ガチャ</title>
+<style>
+:root{--blue:#1e5bd8;--blue2:#e8f0ff;--ink:#1a2540;--n:#6b7a99;--r:#1e9bd8;--sr:#e0a100;--bg:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif}
+header{background:var(--blue);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+header h1{font-size:20px;margin:0}
+#count{font-size:16px;background:#fff;color:var(--blue);border-radius:20px;padding:4px 12px;font-weight:bold}
+nav{display:flex;border-bottom:3px solid var(--blue)}
+nav button{flex:1;padding:14px 4px;font-size:18px;border:0;background:var(--blue2);color:var(--blue);font-weight:bold;cursor:pointer;font-family:inherit}
+nav button.on{background:var(--blue);color:#fff}
+section{display:none;padding:16px;max-width:760px;margin:0 auto}
+section.on{display:block}
+.center{text-align:center}
+#spin{font-size:28px;padding:20px 48px;border-radius:50px;border:0;background:var(--blue);color:#fff;font-weight:bold;cursor:pointer;box-shadow:0 6px 0 #123b8f;font-family:inherit}
+#spin:active{transform:translateY(4px);box-shadow:0 2px 0 #123b8f}
+#capsule{width:120px;height:120px;border-radius:50%;margin:24px auto;background:linear-gradient(#1e5bd8 50%,#fff 50%);border:5px solid var(--blue)}
+#capsule.shake{animation:shake .15s 8}
+@keyframes shake{0%{transform:rotate(-15deg)}50%{transform:rotate(15deg)}100%{transform:rotate(-15deg)}}
+.card{border:4px solid var(--n);border-radius:16px;padding:20px;margin:20px auto;max-width:460px;background:#fff;text-align:center}
+.card.R{border-color:var(--r);background:#eef8ff}
+.card.SR{border-color:var(--sr);background:#fff8e0;box-shadow:0 0 24px #f5c842}
+.rar{display:inline-block;font-weight:bold;border-radius:8px;padding:2px 10px;color:#fff;background:var(--n)}
+.R .rar{background:var(--r)} .SR .rar{background:var(--sr)}
+.no{color:var(--n);font-size:14px;margin-top:6px}
+.txt{font-size:30px;font-weight:bold;margin:14px 0;line-height:1.4}
+.memo{font-size:14px;color:var(--n)}
+.new{color:#e03a3a;font-weight:bold}
+.cimg{width:100%;max-width:360px;display:block;margin:8px auto;border-radius:12px}
+.cell img{width:100%;display:block;border-radius:6px}
+.waku{max-width:360px;margin:8px auto;border:6px solid var(--n);border-radius:14px;overflow:hidden;background:#fff}
+.R .waku{border-color:var(--r)} .SR .waku{border-color:var(--sr)}
+.waku .wno{background:var(--blue);color:#fff;font-weight:bold;padding:6px;font-size:16px}
+.waku .wimg{aspect-ratio:4/3;background:#f1f3f7;display:flex;align-items:center;justify-content:center;color:#aab;font-size:18px}
+.waku .wimg img{width:100%;height:100%;object-fit:cover;display:block}
+.waku .wtxt{font-size:24px;font-weight:bold;padding:10px;line-height:1.3}
+.cell .waku{border-width:3px;margin:0} .cell .waku .wno{font-size:11px;padding:2px} .cell .waku .wtxt{font-size:12px;padding:4px}
+#aPrev{margin-top:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.cell{border:2px solid var(--n);border-radius:10px;padding:8px;min-height:90px;font-size:13px;background:#fff}
+.cell.R{border-color:var(--r)} .cell.SR{border-color:var(--sr)}
+.cell.no-get{background:#f1f3f7;color:#aab;border-style:dashed;display:flex;align-items:center;justify-content:center;font-size:28px}
+.cell b{display:block;font-size:11px;color:var(--n)}
+h2{color:var(--blue);font-size:18px;border-left:6px solid var(--blue);padding-left:8px}
+label{display:block;margin:12px 0 4px;font-weight:bold}
+input,select{width:100%;font-size:18px;padding:10px;border:2px solid var(--blue);border-radius:8px;font-family:inherit}
+.btn{margin-top:16px;width:100%;font-size:20px;padding:14px;border:0;border-radius:10px;background:var(--blue);color:#fff;font-weight:bold;cursor:pointer;font-family:inherit}
+.btn.sub{background:var(--blue2);color:var(--blue)}
+#comp{display:none;background:var(--sr);color:#fff;font-size:24px;padding:16px;border-radius:12px;text-align:center;font-weight:bold;margin:12px 0}
+</style>
+</head>
+<body>
+<header><h1>じゅんびうんどう ガチャ</h1><span id="count">0/50</span></header>
+<nav>
+  <button class="on" data-t="g">① ガチャ</button>
+  <button data-t="z">② ずかん</button>
+  <button data-t="a">③ ついか</button>
+</nav>
+
+<section id="g" class="on">
+  <div class="center">
+    <div id="capsule"></div>
+    <button id="spin">まわす！</button>
+  </div>
+  <div id="result"></div>
+</section>
+
+<section id="z">
+  <div id="comp">🎉 コンプリート！ おめでとう！ 🎉</div>
+  <h2>ずかん</h2><div id="zukan" class="grid"></div>
+  <h2>オリジナル</h2><div id="orig" class="grid"></div>
+  <button class="btn sub" id="reset">ずかんを リセット（先生）</button>
+</section>
+
+<section id="a">
+  <h2>カードを ついか する</h2>
+  <label>カードの ことば</label><input id="aTxt" placeholder="れい：ペンギン あるき">
+  <label>しゅるい</label>
+  <select id="aType"><option value="D">1 ダッシュ</option><option value="H">2 からだ ほぐし</option><option value="N">3 なかま</option></select>
+  <label>レアど</label>
+  <select id="aRar"><option value="N">1 ノーマル</option><option value="R">2 レア</option><option value="SR">3 げきレア</option></select>
+  <label>やりかた（先生メモ・なくてもよい）</label><input id="aMemo">
+  <label>カードの え（しゃしん・Canvaの絵など・なくてもよい）</label><input type="file" id="aImg" accept="image/*">
+  <div id="aPrev"></div>
+  <button class="btn" id="add">ついか する</button>
+  <p id="aMsg" class="center"></p>
+</section>
+
+<script>
+const BASE=[
+["D","N","うしろむき ダッシュ","10m後ろ向き。横に広がる"],["D","N","ふえ 2かいで はんたいへ","笛2回で折り返し"],["D","N","ねころんで スタート","うつぶせ→笛で起きて10m"],["D","N","すわって スタート","体育座りから10m"],["D","N","よこむき ダッシュ","右向き→帰りは左向き"],["D","N","スキップ で いこう","10mスキップ"],["D","N","ももあげ ダッシュ","ももを高く上げて10m"],["D","N","おしりキック ダッシュ","かかとでおしりをタッチ"],["D","N","こまた で ちょこちょこ","小さい歩幅で速く"],["D","N","おおまた ジャンプ","大股で少ない歩数"],
+["H","N","どうぶつ あるき「カニ」","横向きで手足をつく"],["H","N","どうぶつ あるき「クマ」","四つんばい"],["H","N","どうぶつ あるき「カエル」","しゃがんでジャンプ"],["H","N","どうぶつ あるき「アザラシ」","腕だけで前へ"],["H","N","ケンケン 10かい","右5回・左5回"],["H","N","その場 グーパー ジャンプ","10回"],["H","N","ひこうき バランス","片足で両手を広げ5秒"],["H","N","からだで アルファベット「T」","全身で文字"],["H","N","うで ぐるぐる まわし","前10回・後ろ10回"],["H","N","アキレスけん のばし","左右10秒ずつ"],["H","N","ぞうきん がけ の まね","四つんばいで10m"],["H","N","だるまさん で とまる","先生の合図で止まる"],["H","N","ブリッジ に ちょうせん","難しい子はおしり上げ"],
+["N","N","ケンケン じゃんけん","片足でじゃんけん3回"],["N","N","せなかあわせ で たつ","2人で押し合って立つ"],["N","N","あくしゅ で バランス","手をつないで片足5秒"],["N","N","タッチ ハイタッチ","10人とハイタッチ"],["N","N","トンネル くぐり","足の下をくぐる。交代"],["N","N","てつなぎ スクワット","2人でスクワット5回"],["N","N","あしじゃんけん","足でグー・チョキ・パー"],
+["D","R","じゃんけん まけたら ダッシュ","負けた方がコーンまで往復"],["D","R","てを つないで ダッシュ","2人で息を合わせて10m"],["D","R","しずかに スローモーション ダッシュ","声なし・とてもゆっくり"],["D","R","ふえ の かずで うごき が かわる","1回走る・2回止まる・3回しゃがむ"],["D","R","いろ を さわって もどる","先生が言った色にタッチ"],["D","R","おいかけ ダッシュ","1m後ろからスタート"],["D","R","ボール なし ドリブル","エアドリブルで10m"],["H","R","かがみ の まね","2人組。30秒で交代"],["H","R","ロボット たいそう","カクカク動く"],["H","R","目を とじて バランス","片足で目を閉じ5秒"],["H","R","いきもの へんしん","言われた生き物に10秒"],["N","R","しっぽ とり（ミニ）","30秒だけ2人で"],["N","R","ならんで ウェーブ","列で順番にしゃがむ"],["N","R","みんなで 1・2・3 ジャンプ","全員そろって3回"],["N","R","あたまの 上で キャッチ","帽子を投げて2人でキャッチ"],
+["D","SR","せんせい と きょうそう","先生は後ろ向き"],["D","SR","クラス 全員 リレー（30びょう）","30秒で何人つなげるか"],["H","SR","せんせいの ポーズ を まねしよう","変なポーズで5秒停止"],["H","SR","せんせいが どうぶつ に なる","子ども達が名前を当てる"],["N","SR","クラス で 1つの 生きもの","全員で1つの形を作る"]
+];
+const RNAME={N:"ノーマル",R:"レア",SR:"げきレア"}, TNAME={D:"ダッシュ",H:"からだほぐし",N:"なかま"};
+const RATE={N:70,R:25,SR:5};
+function load(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+let got=load("jg_got",{}), orig=load("jg_orig",[]);
+const all=()=>BASE.map((c,i)=>({id:"b"+(i+1),no:String(i+1).padStart(2,"0"),t:c[0],r:c[1],txt:c[2],memo:c[3]}))
+  .concat(orig.map((c,i)=>({id:"o"+(i+1),no:String(51+i),t:c.t,r:c.r,txt:c.txt,memo:c.memo,img:c.img,o:1})));
+
+function pick(){
+  let x=Math.random()*100, r=x<RATE.SR?"SR":x<RATE.SR+RATE.R?"R":"N";
+  let pool=all().filter(c=>c.r===r); if(!pool.length) pool=all();
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function cardHTML(c,isNew){
+  const head=`<span class="rar">${RNAME[c.r]}</span> ${isNew?'<span class="new">NEW!</span>':''}`;
+  if(!c.o) return `<div class="card ${c.r}">${head}<img class="cimg" src="cards/card${c.no}.jpg" alt="${esc(c.txt)}"><div class="memo">${esc(c.memo||"")}</div></div>`;
+  return `<div class="card ${c.r}">${head}${waku(c)}<div class="memo">${esc(c.memo||"")}</div></div>`;
+}
+function waku(c){
+  return `<div class="waku"><div class="wno">No.${c.no}・${TNAME[c.t]}</div><div class="wimg">${c.img?`<img src="${c.img}" alt="">`:"え なし"}</div><div class="wtxt">${esc(c.txt)}</div></div>`;
+}
+function esc(s){return String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]))}
+function render(){
+  const n=BASE.filter((c,i)=>got["b"+(i+1)]).length;
+  document.getElementById("count").textContent=n+"/50";
+  document.getElementById("comp").style.display=n===50?"block":"none";
+  const cells=c=>got[c.id]?(c.o?`<div class="cell ${c.r}">${waku(c)}</div>`:`<div class="cell ${c.r}"><img src="cards/card${c.no}.jpg" alt="${esc(c.txt)}"></div>`):`<div class="cell no-get">？</div>`;
+  const a=all();
+  document.getElementById("zukan").innerHTML=a.filter(c=>!c.o).map(cells).join("");
+  document.getElementById("orig").innerHTML=a.filter(c=>c.o).map(cells).join("")||"<p>まだ ありません</p>";
+}
+document.getElementById("spin").onclick=()=>{
+  const cap=document.getElementById("capsule"), res=document.getElementById("result"), btn=document.getElementById("spin");
+  btn.disabled=true; res.innerHTML=""; cap.classList.add("shake");
+  setTimeout(()=>{cap.classList.remove("shake");const c=pick();const isNew=!got[c.id];got[c.id]=1;save("jg_got",got);res.innerHTML=cardHTML(c,isNew);render();btn.disabled=false},1200);
+};
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button,section").forEach(e=>e.classList.remove("on"));
+  b.classList.add("on");document.getElementById(b.dataset.t).classList.add("on");
+});
+let aImgData="";
+// えは 横480pxに ちぢめて JPEGで ブラウザに ほぞん
+aImg.onchange=()=>{
+  const f=aImg.files[0]; aImgData=""; aPrev.innerHTML=""; if(!f) return;
+  const im=new Image();
+  im.onload=()=>{const w=Math.min(480,im.width),h=Math.round(im.height*w/im.width),cv=document.createElement("canvas");
+    cv.width=w;cv.height=h;cv.getContext("2d").drawImage(im,0,0,w,h);aImgData=cv.toDataURL("image/jpeg",0.8);URL.revokeObjectURL(im.src);
+    aPrev.innerHTML=waku({no:String(51+orig.length),t:aType.value,txt:aTxt.value.trim()||"（ことば）",img:aImgData});};
+  im.src=URL.createObjectURL(f);
+};
+document.getElementById("add").onclick=()=>{
+  const txt=document.getElementById("aTxt").value.trim(), msg=document.getElementById("aMsg");
+  if(!txt){msg.textContent="ことばを いれてね";return}
+  const item={txt,t:aType.value,r:aRar.value,memo:aMemo.value.trim()};
+  if(aImgData) item.img=aImgData;
+  orig.push(item);save("jg_orig",orig);
+  if(load("jg_orig",[]).length!==orig.length){orig.pop();msg.textContent="ほぞん できませんでした（え が 大きすぎるかも）";return}
+  aTxt.value="";aMemo.value="";aImg.value="";aImgData="";aPrev.innerHTML="";msg.textContent="No."+(50+orig.length)+" を ついか したよ！";render();
+};
+document.getElementById("reset").onclick=()=>{if(confirm("ずかんを リセット しますか？（ついかした カードは のこります）")){got={};save("jg_got",got);render()}};
+render();
+</script>
+</body>
+</html>
