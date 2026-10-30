@@ -351,6 +351,19 @@ input.txt:focus{border-color:var(--wakakusa-deep);box-shadow:0 0 0 4px rgba(168,
   .sc-head .t{font-size:22px}
   .modal-msg{font-size:20px}
 }
+@page{size:A4 landscape;margin:10mm}
+@media print{
+  html,body{background:#fff!important}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  header.top,.nav,.toast,.modal,.mode-start{display:none!important}
+  .app{padding:0!important;max-width:none}
+  .panel{border:0!important;box-shadow:none!important;background:#fff!important;padding:0!important}
+  .s5>:not(.card-scroll){display:none!important}
+  .card-scroll{width:auto;overflow:visible;padding:0}
+  #submitCard{width:1000px;flex-direction:row;align-items:stretch;padding:24px 28px;gap:26px;break-inside:avoid;margin:0 auto}
+  .sc-right{width:auto}
+  .page{animation:none!important;opacity:1!important}
+}
 </style>
 </head>
 <body>
