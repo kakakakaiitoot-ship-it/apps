@@ -184,6 +184,25 @@ input.txt:focus{border-color:var(--wakakusa-deep);box-shadow:0 0 0 4px rgba(168,
 .bubble .cards{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
 .bubble.tip{border-color:var(--wakakusa)}
 .bubble.tip::before{border-right-color:var(--wakakusa)}
+.write-btn{display:block;margin:8px auto 0;min-height:48px;border-radius:999px;border:3px solid var(--wakakusa);background:#fff;font-size:17px;font-weight:800;padding:4px 18px}
+.short-btn{min-height:44px;margin-left:8px;border-radius:999px;border:2px solid var(--warn);background:#fff;font-size:16px;font-weight:800;padding:2px 14px}
+.short-box{margin-top:8px;display:grid;gap:6px}
+.short-box button{min-height:48px;border-radius:12px;border:2px solid var(--wakakusa);background:var(--wakakusa-pale);font-size:18px;font-weight:800;padding:4px 12px;text-align:left}
+.mode-start{position:fixed;inset:0;z-index:900;display:none;overflow-y:auto;padding:16px;background:var(--wakakusa-pale)}
+.mode-start.show{display:flex}
+.mode-start .panel{width:min(560px,100%);margin:auto;text-align:center}
+.video-btn{display:block;width:100%;min-height:60px;margin-top:10px;border-radius:999px;border:3px solid var(--shu);background:#fff6f1;font-size:19px;font-weight:800}
+.howto-video{display:block;width:100%;margin-top:10px;border-radius:12px;background:#000}
+.howto{margin:12px 0 4px;padding:12px 14px;border-radius:12px;background:var(--wakakusa-pale);text-align:left}
+.howto h3{margin:0 0 6px;font-size:18px}
+.howto ol{margin:0;padding-left:1.5em;font-size:17px;line-height:1.6}
+.mode-start .mode-btn{display:block;width:100%;flex:none;min-height:72px;margin-top:12px;font-size:22px}
+.mode-row{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+.mode-btn{flex:1;min-height:52px;border-radius:999px;border:3px solid var(--wakakusa);background:#fff;font-size:18px;font-weight:800;padding:4px 14px}
+.mode-btn.on{background:var(--wakakusa-pale)}
+.kanji-row{margin-top:8px}.kanji-row label{display:block;font-size:16px;font-weight:800;margin-bottom:4px}.kanji-row .txt{width:100%}
+.bubble.kaburi{border-color:var(--shu);background:#fff6f1}
+.bubble.kaburi::before{border-right-color:var(--shu)}
 .swap-row{display:flex;justify-content:center;margin:-4px 0 10px}
 .swap{min-height:52px;border-radius:999px;border:3px solid var(--wakakusa);background:var(--wakakusa-pale);font-size:18px;font-weight:800;padding:4px 20px}
 .make{display:flex;gap:10px;align-items:center;background:#fff6f1;border:3px dashed var(--shu);border-radius:18px;padding:10px 12px;margin-bottom:14px;flex-wrap:wrap}
@@ -293,6 +312,14 @@ input.txt:focus{border-color:var(--wakakusa-deep);box-shadow:0 0 0 4px rgba(168,
   .s1,.s3,.s4{grid-template-columns:1fr}
   .counter{position:static}
   .s2{grid-template-columns:1fr}
+  header.top{gap:8px 12px}
+  header.top>:last-child{margin-left:auto}
+  .steps{order:5;flex:0 0 100%;flex-wrap:nowrap;justify-content:space-between;gap:6px}
+  .step-btn{flex:1;min-width:0;justify-content:center;white-space:nowrap;font-size:15px;padding:4px 8px 4px 4px}
+  .step-btn .num{flex:none;width:30px;height:30px;font-size:17px}
+  .card-scroll{width:100%;overflow:visible;padding:0}
+  #submitCard{width:100%;padding:16px;gap:16px}
+  .sc-head{flex-wrap:wrap}
 }
 @media (max-width:600px){
   body{font-size:18px}
@@ -303,6 +330,26 @@ input.txt:focus{border-color:var(--wakakusa-deep);box-shadow:0 0 0 4px rgba(168,
   .arrow{transform:rotate(90deg)}
   .slot-row{flex-wrap:wrap}
   .slot-label{width:100%;flex-direction:row;gap:8px;min-height:44px}
+  .logo{font-size:22px}
+  header.top>:last-child{min-height:44px;padding:2px 10px;font-size:15px}
+  .step-btn{flex:0 0 auto;padding:3px}
+  .step-btn .num{width:38px;height:38px}
+  input.txt{font-size:24px;min-height:56px}
+  .slot .row{flex-wrap:wrap}
+  .slot .row input.txt{flex:0 0 100%}
+  .slot .icon-btn{flex:1}
+  .make input{flex:0 0 100%;min-width:0;font-size:24px}
+  .make .lbl{white-space:normal}
+  .make .icon-btn,.make .btn{flex:1}
+  .app{padding-bottom:160px}
+  .nav{padding:8px 16px calc(8px + env(safe-area-inset-bottom))}
+  .nav .inner{flex-wrap:wrap;gap:6px 10px}
+  .nav .status{order:-1;flex:0 0 100%;font-size:15px}
+  .nav .btn{flex:1;min-height:52px;padding:6px 10px;white-space:nowrap;font-size:18px}
+  #submitCard{flex-direction:column;align-items:center;padding:12px;border-width:4px}
+  .sc-right{width:100%}
+  .sc-head .t{font-size:22px}
+  .modal-msg{font-size:20px}
 }
 </style>
 </head>
@@ -316,10 +363,27 @@ input.txt:focus{border-color:var(--wakakusa-deep);box-shadow:0 0 0 4px rgba(168,
   </header>
 
   <!-- STEP1 主役のことば -->
+  <div class="mode-start" id="modeStart"><div class="panel">
+    <p class="guide"><span class="badge">ステップ0</span>はいくの つくりかた</p>
+    <div class="howto"><h3>📖 つかいかた</h3><ol>
+      <li><b>ことば</b>：いちばん いれたい ことばを 1つ きめる</li>
+      <li><b>イメージ</b>：しつもんに こたえて、ことばの カードを あつめる</li>
+      <li><b>ならべる</b>：カードを 5・7・5に ならべる。じぶんで かいても いいよ</li>
+      <li><b>くらべっこ</b>：さいしょの くと くらべる</li>
+      <li><b>ほぞん</b>：できた はいくを のこす</li>
+    </ol></div>
+    <button class="video-btn" id="videoBtn">▶ どうがで みる</button>
+    <video class="howto-video" id="howtoVideo" controls playsinline preload="none" hidden></video>
+    <p class="sub" id="videoErr" style="margin:6px 0 0" hidden>どうがが ひらけなかったよ。せんせいに つたえてね。</p>
+    <p class="guide" style="justify-content:center;margin-top:14px">どちらで つくる？</p>
+    <button class="mode-btn" data-mode="hira">① ひらがな</button>
+    <button class="mode-btn" data-mode="kanji">② かんじまじり</button>
+  </div></div>
   <section class="page" id="page1">
     <div class="cols s1">
       <div class="panel">
         <p class="guide"><span class="badge">ステップ1</span>しゅやくの ことばを きめよう</p>
+        <div class="mode-row" id="modeRow"></div>
         <p class="ask">いちばん いれたい ことばを<br><span class="em">１つ</span> おしえてね！</p>
         <div class="word-box">
           <input class="txt" id="word" placeholder="れい：どんぐり" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
@@ -623,7 +687,7 @@ function fromTemplates(tpls,opt,w){
 
 /* ============ 状態 ============ */
 const KEY='haiku-app-v2';
-const blank=()=>({step:1,season:'aki',word:'',reading:'',cards:[],answered:[],q:'odoroki',slots:[null,null,null],before:null,fav:[],grade:'1',kumi:'',name:'',filter:'all',cardsWord:''});
+const blank=()=>({step:1,season:'aki',word:'',reading:'',cards:[],answered:[],q:'odoroki',slots:[null,null,null],before:null,fav:[],grade:'1',kumi:'',name:'',filter:'all',cardsWord:'',mode:null});
 let S=blank();
 try{const v=JSON.parse(localStorage.getItem(KEY)); if(v) S=Object.assign(blank(),v);}catch(e){}
 if(!QUESTIONS[S.q]) S.q='miru';
@@ -662,7 +726,9 @@ const SE={
 
 /* ============ ナビ ============ */
 const STEP_LABELS=['ことば','イメージ','ならべる','くらべっこ','ほぞん'];
-const slotsFull=()=>S.slots.every(Boolean);
+const slotsFull=()=>S.slots.every(s=>s&&s.text.trim());
+// はじめて 3つ そろった ときの かたちを「さいしょの く」として のこす
+function ensureBefore(){ if(slotsFull()&&!S.before) S.before=S.slots.map(s=>s.orig||s.text); }
 function canReach(n){ if(n===1) return true; if(!wordReady()) return false; if(n<=3) return true; return !!S.before && slotsFull(); }
 function renderSteps(){
   $('steps').innerHTML=STEP_LABELS.map((l,i)=>{const n=i+1,cls=n===S.step?'active':(n<S.step?'done':'');
@@ -670,6 +736,7 @@ function renderSteps(){
 }
 $('steps').addEventListener('click',e=>{const b=e.target.closest('.step-btn'); if(b&&!b.disabled) goStep(+b.dataset.step);});
 function goStep(n){
+  ensureBefore();
   if(n>=2 && !wordReady()){ toast(hasKanji(S.word)?'よみかたを ひらがなで かいてね':'さきに しゅやくの ことばを きめてね'); return; }
   if(n>=4 && !slotsFull()){ toast('うえ・なか・した ぜんぶに ことばを いれてね🃏'); return; }
   stopListen(); stopSpeech();
@@ -724,6 +791,23 @@ $('helpers').addEventListener('click',e=>{const b=e.target.closest('.helper'); i
 $('word').addEventListener('input',e=>setWord(e.target.value));
 $('reading').addEventListener('input',e=>{S.reading=e.target.value; save(); renderWord(); renderNav(); renderSteps();});
 $('wordMic').onclick=()=>listen($('wordMic'),(t,fin)=>{ $('word').value=t; setWord(t); if(fin) SE.pikon(); });
+function renderMode(){
+  $('modeStart').classList.toggle('show',!S.mode);
+  $('modeRow').innerHTML=`<button class="mode-btn" id="modeChange">${S.mode==='kanji'?'かんじまじり':'ひらがな'}で つくるよ（かえる）</button>`;
+}
+// どうがは おすまで よみこまない（がっこうの ネットに やさしく）
+function closeVideo(){ const v=$('howtoVideo'); v.pause(); v.hidden=true; $('videoBtn').textContent='▶ どうがで みる'; }
+$('videoBtn').onclick=()=>{
+  const v=$('howtoVideo');
+  if(!v.hidden){ closeVideo(); return; }
+  $('videoErr').hidden=true;
+  if(!v.getAttribute('src')) v.src='20261031_haiku_tsukaikata.mp4';
+  v.hidden=false; $('videoBtn').textContent='✕ どうがを とじる';
+  v.play().catch(()=>{});
+};
+$('howtoVideo').addEventListener('error',()=>{ closeVideo(); $('howtoVideo').removeAttribute('src'); $('videoErr').hidden=false; });
+$('modeStart').addEventListener('click',e=>{ const b=e.target.closest('[data-mode]'); if(b){ closeVideo(); S.mode=b.dataset.mode; save(); SE.pikon(); goStep(1); renderMode(); } });
+$('modeRow').addEventListener('click',e=>{ if(e.target.closest('#modeChange')){ S.mode=null; save(); renderMode(); } });
 function setWord(w){
   S.word=(w||'').trim();
   if(!hasKanji(S.word)) S.reading='';
@@ -821,7 +905,7 @@ function placeCard(t){
   S.slots[i]={orig:t,text:t};
   SE.pikon();
   // はじめて 3つ そろった ときの かたちを「さいしょの く」として のこす
-  if(slotsFull() && !S.before){ S.before=S.slots.map(s=>s.orig); SE.pirorin(); toast('5・7・5が そろった！🎉<br>ことばを「ちょいかえ」して もっと よく しよう',3600); }
+  if(slotsFull() && !S.before){ ensureBefore(); SE.pirorin(); toast('5・7・5が そろった！🎉<br>ことばを「ちょいかえ」して もっと よく しよう',3600); }
   refresh3();
 }
 function makeLive(){
@@ -853,8 +937,10 @@ function renderSlots(){
         <button class="icon-btn drum" data-drum="${i}"><span class="ico">🥁</span>たたく</button>
         <button class="icon-btn x" data-x="${i}"><span class="ico">✕</span>はずす</button>
       </div>
-      <div class="count" id="cnt${i}"></div>`
-      :`<div class="placeholder">${L.target}おんの カードを タップしてね<div class="empty-dots">${'<i></i>'.repeat(L.target)}</div></div>`;
+      <div class="count" id="cnt${i}"></div><div class="short-box" id="short${i}"></div>${S.mode==='kanji'?`
+      <div class="kanji-row"><label for="kj${i}">✏️ かんじで かくと？（おんの かずは うえの ひらがなで かぞえるよ）</label>
+        <input class="txt" id="kj${i}" data-kanji="${i}" value="${esc(s.kanji||'')}" placeholder="かかなくても いいよ" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"></div>`:''}`
+      :`<div class="placeholder">${L.target}おんの カードを タップしてね<div class="empty-dots">${'<i></i>'.repeat(L.target)}</div><button class="write-btn" data-write="${i}">✏️ じぶんで かく</button></div>`;
     return `<div class="slot-row"><div class="slot-label">${L.key}<small>${L.target}おん</small></div><div class="slot ${s?'filled':''}">${inner}</div></div>`;
   }).join('') + `<div class="swap-row"><button class="swap" id="swapBtn" ${S.slots[0]||S.slots[2]?'':'disabled'}>🔃 「うえ」と「した」を いれかえる</button></div>`;
   LINES.forEach((_,i)=>S.slots[i]&&updateCount(i));
@@ -869,30 +955,88 @@ function countView(text,target){
   const note=(kanji||other)?'<span class="note">※ かんじは だいたいで かぞえたよ。ひらがなに すると ぴったり わかるよ。</span>':'';
   return `<span class="meter">${meter}</span>${msg}${note}`;
 }
-function updateCount(i){ const el=$('cnt'+i); if(el) el.innerHTML=countView(S.slots[i].text,LINES[i].target); }
+// ひらがなを なおしたら、かんじの ほうは ちがう ことばに なるので けす
+function clearKanji(i){ const s=S.slots[i]; if(s) s.kanji=''; const el=$('kj'+i); if(el) el.value=''; }
+function updateCount(i){
+  const el=$('cnt'+i); if(!el) return;
+  const over=mora(S.slots[i].text)>LINES[i].target;
+  el.innerHTML=countView(S.slots[i].text,LINES[i].target)+(over?`<button class="short-btn" data-short="${i}">✂️ みじかく する？</button>`:'');
+}
+// ことばの いみが かわりにくい けずりかただけを つかう（じしょが ないので、とちゅうの「の」「が」などは けずらない）
+const SHORT_RULES=[['ている','てる'],['ていた','てた'],['ていく','てく'],['ような','よな'],['ました','た'],['です',''],['とても',''],['すごく',''],['すごい',''],['たくさん',''],['いっぱい',''],['ほんとうに',''],['なんだか',''],['ちょっと','']];
+function shortCandidates(text,target){
+  const w=baseWord(), seen=new Set([text]); let q=[text];
+  for(let d=0;d<4;d++){
+    const nx=[];
+    for(const t of q){
+      const add=x=>{ if(x&&!seen.has(x)&&mora(x)>=target-1){ seen.add(x); nx.push(x); } };
+      for(const [a,b] of SHORT_RULES){ if(t.includes(a)) add(t.replace(a,b)); }
+      if(/[のがはをにへともで]$/.test(t)&&t!==w) add(t.slice(0,-1));              // おわりの ことば
+      if(w) for(const p of 'のがはをにもと'){ if(t.includes(w+p)) add(t.replace(w+p,w)); } // しゅやくの すぐ あと
+    }
+    q=nx;
+  }
+  seen.delete(text);
+  const dist=x=>Math.abs(mora(x)-target);
+  return [...seen].filter(x=>mora(x)<mora(text)).sort((a,b)=>dist(a)-dist(b)).slice(0,2);
+}
+function showShort(i){
+  const text=S.slots[i].text, target=LINES[i].target, list=shortCandidates(text,target), box=$('short'+i);
+  const label=x=>{ const n=mora(x); return n===target?'ぴったり！':n>target?`あと ${n-target}おん おおい`:`あと ${target-n}おん すくない`; };
+  box.innerHTML=(list.length?list.map((x,k)=>`<button data-apply="${i}" data-t="${esc(x)}">${'①②'[k]} ${esc(x)}（${label(x)}）</button>`).join('')
+    :`<p class="sub" style="margin:0">いらない ことばは どれかな？ じぶんで けして みよう。</p>`)
+    +`<button data-keep="${i}">${list.length?'①②③'[list.length]+' ':''}このままに する</button>`;
+}
 $('slots').addEventListener('input',e=>{
-  if(e.target.tagName!=='INPUT') return; const i=+e.target.dataset.i;
-  S.slots[i].text=e.target.value; save(); updateCount(i);
+  if(e.target.dataset.kanji!==undefined){ S.slots[+e.target.dataset.kanji].kanji=e.target.value; save(); return; }
+  if(e.target.tagName!=='INPUT') return; const i=+e.target.dataset.i; clearKanji(i);
+  S.slots[i].text=e.target.value; save(); updateCount(i); $('short'+i).innerHTML=''; renderNav(); renderSteps();
   clearTimeout(renderAdvice._t); renderAdvice._t=setTimeout(renderAdvice,600);
 });
 $('slots').addEventListener('click',e=>{
+  const wr=e.target.closest('[data-write]'), sh=e.target.closest('[data-short]'), ap=e.target.closest('[data-apply]'), kp=e.target.closest('[data-keep]');
+  if(wr){ const i=+wr.dataset.write; S.slots[i]={orig:'',text:''}; refresh3(); $('sl'+i).focus(); return; }
+  if(sh){ showShort(+sh.dataset.short); return; }
+  if(ap){ const i=+ap.dataset.apply; S.slots[i].text=ap.dataset.t; clearKanji(i); SE.pikon(); refresh3(); return; }
+  if(kp){ $('short'+kp.dataset.keep).innerHTML=''; return; }
   if(e.target.closest('#swapBtn')){ [S.slots[0],S.slots[2]]=[S.slots[2],S.slots[0]]; SE.pikon(); refresh3(); toast('「うえ」と「した」を いれかえたよ🔃'); return; }
   const x=e.target.closest('[data-x]'), m=e.target.closest('[data-mic]'), d=e.target.closest('[data-drum]');
   if(x){ S.slots[+x.dataset.x]=null; refresh3(); }
-  if(m){ const i=+m.dataset.mic; listen(m,(t,fin)=>{ $('sl'+i).value=t; S.slots[i].text=t; updateCount(i); if(fin){ save(); renderAdvice(); } }); }
+  if(m){ const i=+m.dataset.mic; listen(m,(t,fin)=>{ $('sl'+i).value=t; S.slots[i].text=t; clearKanji(i); updateCount(i); if(fin){ save(); renderAdvice(); renderNav(); renderSteps(); } }); }
   if(d){ const i=+d.dataset.drum; playLine(S.slots[i].text,LINES[i].target); }
 });
+// おなじ ことばが 2かい はいって いないか さがす（しゅやくは 1ぎょうの なかも、ほかは ぎょうを またいで 3もじ いじょう）
+function findKaburi(){
+  const raw=S.slots.map(s=>[...(s?s.text:'').replace(PUNC,'')]), L=raw.map(a=>toHira(a.join('')));
+  const times=(s,k)=>s.split(k).length-1;
+  const w=toHira(baseWord());
+  if([...w].length>=2){ const n=L.reduce((a,s)=>a+times(s,w),0); if(n>=2) return {word:baseWord(),n}; }
+  let best=null;
+  raw.forEach((a,i)=>{ const h=[...L[i]];
+    for(let st=0;st<h.length;st++) for(let len=h.length-st;len>=3&&(!best||len>best.len);len--){
+      if(SMALL.includes(h[st])||h[st]==='ー') break;
+      const sub=h.slice(st,st+len).join(''), lines=L.filter(s=>s.includes(sub)).length;
+      if(lines>=2){ best={word:a.slice(st,st+len).join(''),n:lines,len}; break; }
+    }
+  });
+  return best;
+}
 function renderAdvice(){
   const el=$('advice');
+  const kb=findKaburi();
+  const kaburi=kb?`<div class="bubble-wrap"><span class="face">🐸</span><div class="bubble kaburi"><div class="qq">「${esc(kb.word)}」が ${kb.n}かい はいって いるよ。わざとかな？</div>
+      <div class="sub" style="margin:0">わざと くりかえすなら そのままで いいよ。どちらかを ちがう ことばに かえると、もっと いろいろな ようすが つたわるよ。</div></div></div>`:'';
   let hit=null,line=-1;
   S.slots.forEach((s,i)=>{ if(!s||hit) return; const f=FEELINGS.find(F=>F.keys.some(k=>toHira(s.text).includes(k))); if(f){hit=f;line=i;} });
   if(hit){
     const cards=hit.cards.filter(t=>mora(t)===LINES[line].target);
-    el.innerHTML=`<div class="bubble-wrap"><span class="face">🐸</span><div class="bubble">
+    el.innerHTML=kaburi+`<div class="bubble-wrap"><span class="face">🐸</span><div class="bubble">
       <div class="qq">「${esc(S.slots[line].text)}」… ${hit.q}</div>
       <div class="sub" style="margin:0 0 8px">タップすると「${LINES[line].key}」と いれかわるよ。じぶんで かんがえても いいね。</div>
       <div class="cards">${cards.map(t=>cardBtn(t,'iikae','',`data-iikae="${line}"`)).join('')}</div>
     </div></div>`;
+  } else if(kaburi){
+    el.innerHTML=kaburi;
   } else if(slotsFull()){
     el.innerHTML=`<div class="bubble-wrap"><span class="face">🐸</span><div class="bubble tip"><div class="qq">いいね！ 🥁で たたいて、リズムを たしかめて みよう。</div>
       <div class="sub" style="margin:0">もっと よく するなら…「あっ」「ふと」みたいな はっとした ことばや、おと・におい の ことばに いれかえて みてね。</div></div></div>`;
@@ -900,7 +1044,7 @@ function renderAdvice(){
 }
 $('advice').addEventListener('click',e=>{
   const b=e.target.closest('[data-iikae]'); if(!b) return;
-  const i=+b.dataset.iikae; S.slots[i].text=b.dataset.t; addCards([b.dataset.t],'iikae');
+  const i=+b.dataset.iikae; S.slots[i].text=b.dataset.t; clearKanji(i); addCards([b.dataset.t],'iikae');
   SE.pirorin(); refresh3(); toast('いいかえ できたね！✨ ようすが うかぶよ');
 });
 
@@ -941,12 +1085,14 @@ function playLine(text,target){
 
 /* ============ STEP4 ============ */
 const afterLines=()=>S.slots.map(s=>s?s.text:'');
+const shownLines=()=>S.slots.map(s=>!s?'':(S.mode==='kanji'&&(s.kanji||'').trim())||s.text);
 function nameParts(){ const p=[]; if(S.grade) p.push(S.grade+'ねん'); if(S.kumi) p.push(S.kumi+'くみ'); if(S.name) p.push(S.name); return p; }
 function renderCompare(){
   const B=S.before||['','',''], A=afterLines();
   $('beforeLines').innerHTML=B.map(t=>`<div class="ln">${esc(t)||'&nbsp;'}</div>`).join('');
-  $('afterLines').innerHTML=A.map((t,i)=>`<div class="ln ${t!==B[i]?'changed':''}">${esc(t)||'&nbsp;'}</div>`).join('');
-  $('tzText').innerHTML=A.map(t=>`<p>${esc(t)}</p>`).join('');
+  const V=shownLines();
+  $('afterLines').innerHTML=A.map((t,i)=>`<div class="ln ${t!==B[i]?'changed':''}">${esc(V[i])||'&nbsp;'}</div>`).join('');
+  $('tzText').innerHTML=V.map(t=>`<p>${esc(t)}</p>`).join('');
   $('tzName').innerHTML=nameParts().map(p=>esc(p).replace(/(\d+)/g,'<span class="tcu">$1</span>')).join('　');
 }
 function renderFavs(){ $('favs').innerHTML=FAVS.map((f,i)=>`<button class="fav ${S.fav.includes(i)?'on':''}" data-i="${i}"><span class="box">${S.fav.includes(i)?'✓':''}</span>${f}</button>`).join(''); }
@@ -984,11 +1130,11 @@ function vcol(text,cls='vt-col'){
 }
 function today(){ const d=new Date(); return `${d.getFullYear()}ねん ${d.getMonth()+1}がつ ${d.getDate()}にち`; }
 function renderSubmit(){
-  const B=S.before||['','',''], A=afterLines(), name=nameParts().join(' ');
+  const B=S.before||['','',''], A=afterLines(), V=shownLines(), name=nameParts().join(' ');
   const favs=S.fav.map(i=>`<div class="it">⭐ ${FAVS[i]}</div>`).join('')||'<div class="it" style="color:#6f6454">（えらんで いないよ）</div>';
   $('submitCard').innerHTML=`
     <div class="sc-left"><div class="sc-tz"><div class="hole"></div>
-      <div class="vt">${A.map(t=>vcol(t)).join('')}</div>
+      <div class="vt">${V.map(t=>vcol(t)).join('')}</div>
       ${vcol(name,'vt-name')}
     </div></div>
     <div class="sc-right">
@@ -996,7 +1142,7 @@ function renderSubmit(){
       <div class="sc-word">しゅやくの ことば：<span>${esc(S.word)}</span></div>
       <div class="sc-box"><h4>🃏 さいしょの く</h4>${B.map(t=>`<div class="ln">${esc(t)}</div>`).join('')}</div>
       <div class="sc-arrow">⬇ ちょいかえ ⬇</div>
-      <div class="sc-box after"><h4>✨ くふうした く</h4>${A.map((t,i)=>`<div class="ln ${t!==B[i]?'changed':''}">${esc(t)}</div>`).join('')}</div>
+      <div class="sc-box after"><h4>✨ くふうした く</h4>${A.map((t,i)=>`<div class="ln ${t!==B[i]?'changed':''}">${esc(V[i])}</div>`).join('')}</div>
       <div class="sc-fav"><h4>💮 わたしの おきにいり ポイント</h4>${favs}</div>
     </div>`;
 }
@@ -1006,7 +1152,7 @@ $('saveBtn').onclick=async()=>{
   if(typeof html2canvas!=='function'){ toast('がぞうを つくる じゅんびが できて いないよ。インターネットに つないでね',4000); return; }
   openModal('<div class="modal-msg">🖌️ がぞうを つくって いるよ…</div>');
   try{
-    const cv=await html2canvas($('submitCard'),{scale:2,backgroundColor:'#fbf7ec',useCORS:true,logging:false});
+    const cv=await html2canvas($('submitCard'),{windowWidth:1200,scale:2,backgroundColor:'#fbf7ec',useCORS:true,logging:false});
     const url=cv.toDataURL('image/png');
     const fname=`haiku_${(S.name||'sakuhin').replace(/[\\/:*?"<>|\s]/g,'')}_${new Date().toISOString().slice(0,10)}.png`;
     const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
@@ -1060,6 +1206,7 @@ function render(){
   document.querySelectorAll('section.page').forEach((p,i)=>p.classList.toggle('show',i+1===S.step));
   if(S.step>=2) syncMainCards();
   renderSteps(); renderNav();
+  renderMode();
   if(S.step===1){ $('word').value=S.word; renderTabs(); renderHelpers(); renderWord(); }
   if(S.step===2){ renderQs(); renderPool('pool2',false); }
   if(S.step===3){ renderSlots(); renderFilters(); renderPool('pool3',true); renderAdvice(); resetCounter(); }
