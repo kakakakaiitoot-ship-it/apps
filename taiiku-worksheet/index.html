@@ -201,7 +201,8 @@
     <div class="row"><label><input type="checkbox" id="withKey"> 先生用の答えのページもつける</label></div>
     <div class="hint">答えのページは、最後の1枚です。子どもに配るときは、そのページをはずして印刷してください。</div>
 
-    <div class="btns"><button class="primary" id="print">印刷する（PDFにもできます）</button></div>
+    <div class="btns"><button class="primary" id="print">印刷する</button> <button class="primary" id="savePdf">PDFで保存</button></div>
+    <div id="pdfOut" class="hint"></div>
     <p class="hint">印刷ウィンドウで、用紙サイズ「A4」、倍率「100％」にします。横向きのときは、向きが「横」になっているかも見てください（自動で切りかわらない場合は、印刷ウィンドウで「横」を選びます）。</p>
 
     <details class="about">
@@ -588,6 +589,28 @@ $('#figBox').addEventListener('click',function(e){ var k=figKind();
   if(e.target.dataset.delfig){ var d=e.target.dataset.delfig; S.myFigs[k]=(S.myFigs[k]||[]).filter(function(f){return f.id!==d;}); delete S.figImgs[k+'/'+d]; refresh(); } });
 $('#withKey').addEventListener('change',function(){ S.withKey=this.checked; save(); render(); });
 $('#print').onclick=function(){ window.print(); };
+// PDFで保存：ワークシートを1枚ずつ画像にしてPDFにする（印刷画面が出ない端末用）。道具は押したときだけネットから読む
+function loadJs(u){ return new Promise(function(ok,ng){ var t=document.createElement('script'); t.src=u; t.onload=ok; t.onerror=ng; document.head.appendChild(t); }); }
+$('#savePdf').onclick=function(){
+  var out=$('#pdfOut'), btn=this, doc=null; btn.disabled=true; out.textContent='PDFを作っています…';
+  Promise.all([window.htmlToImage?0:loadJs('https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js'), window.jspdf?0:loadJs('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js')]).then(function(){
+    var sheets=[].slice.call(document.querySelectorAll('.preview .sheet:not(.measure)')), i=0;
+    function next(){
+      if(i>=sheets.length) return Promise.resolve();
+      var sh=sheets[i], land=sh.classList.contains('land'), W=land?297:210, H=land?210:297, op={pixelRatio:(land?1754:1240)/sh.offsetWidth,backgroundColor:'#fff',quality:.9,style:{boxShadow:'none',margin:'0'}};
+      // 1回目は画像が抜けることがあるので、2回作って2回目を使う
+      return htmlToImage.toJpeg(sh,op).then(function(){ return htmlToImage.toJpeg(sh,op); }).then(function(d){
+        if(!doc) doc=new jspdf.jsPDF({orientation:land?'l':'p',unit:'mm',format:'a4'}); else doc.addPage('a4',land?'l':'p');
+        doc.addImage(d,'JPEG',0,0,W,H); i++; out.textContent='PDFを作っています…（'+i+' / '+sheets.length+'枚）'; return next(); });
+    }
+    return next();
+  }).then(function(){
+    var u=unitById(S.unit), name=((S.titles[u.id]||'').trim()||plain(u.name))+'_ワークシート.pdf', blob=doc.output('blob'), url=URL.createObjectURL(blob);
+    out.innerHTML=''; var a=document.createElement('a'); a.href=url; a.download=name; a.id='pdfLink'; a.textContent='できました。ここをタップしてPDFを開く・保存する'; a.style.fontWeight='700'; a.style.fontSize='16px';
+    a.onclick=function(ev){ var f=new File([blob],name,{type:'application/pdf'}); if(navigator.canShare&&navigator.canShare({files:[f]})){ ev.preventDefault(); navigator.share({files:[f]}).catch(function(){}); } };
+    out.appendChild(a);
+  }).catch(function(){ out.textContent='PDFを作れませんでした。ネットにつながっているか確かめて、もう一度押してください。'; }).then(function(){ btn.disabled=false; });
+};
 
 load();
 if(!unitById(S.unit)||unitsOf(S.grade).indexOf(unitById(S.unit))<0){ var us0=unitsOf(S.grade); S.unit=us0[0].id; }
