@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>お礼カードメーカー 飾り枠版</title>
-<style id="pageStyle">@page{size:A4 portrait;margin:8mm;}</style>
+<style id="pageStyle">@page{size:A4 portrait;margin:0;}</style>
 <style>
 :root{
   --blue:#1a6fd4;--blue-d:#12509c;--blue-l:#eaf2fd;
@@ -383,7 +383,8 @@ function layout(){const l=LAY[state.count];
 /* ==================== 描画 ==================== */
 function render(){
   const S=sheetMm(), L=layout(), f=FRAME(state.frame);
-  document.getElementById('pageStyle').textContent=`@page{size:A4 ${state.orientation};margin:8mm;}@media print{.print-sheet{--mm:calc(100cqw/${S.w+3})}}`;
+  /* 余白はカード側で持つ。印刷画面の余白設定（なし・最小など）が変わっても1枚に収まるよう、紙の幅から大きさを決める */
+  document.getElementById('pageStyle').textContent=`@page{size:A4 ${state.orientation};margin:0;}@media print{.page .print-sheet{--mm:calc(100cqw/${state.orientation==='landscape'?305:210.5});margin:calc(8*var(--mm)) auto 0}}`;
 
   const page=document.getElementById('page');
   page.style.width=(state.orientation==='landscape'?297:210)+'mm';
